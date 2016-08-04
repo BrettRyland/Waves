@@ -15,24 +15,12 @@ const double PI = 3.141592653589793;
 
 // Initialise the Integrator.
 // We return a hint for the z-scaling factor for use later in the renderer.
-float Waves::Integrator::Initialise(int m, int n, int rx, int ry, double dx, double dy, double dt, double ws, int ic, int bc) {
-	domain_size_x = m;
-	domain_size_y = n;
+float Waves::Integrator::Initialise(int rx, int ry, double dt, int ic, int bc) {
 	stages_x = rx - 1; // We use rx-1 here since the last node of each cell is the same as the first node of the next cell.
 	stages_y = ry - 1; // Similarly for ry.
-	step_size_x = dx;
-	step_size_y = dy;
 	step_size_time = dt;
-	wave_speed = ws*ws; // The value is actually c^2 where c is the wave speed.
 	initial_conditions = ic;
 	boundary_conditions = bc;
-	cells.resize(domain_size_x*domain_size_y);
-	for (auto& cell : cells) {
-		cell.U.resize(stages_x*stages_y);
-		cell.V.resize(stages_x*stages_y);
-		cell.U_xx.resize(stages_x*stages_y);
-		cell.U_yy.resize(stages_x*stages_y);
-	}
 	coefficients_x = Setup_Coefficients(stages_x + 1);
 	coefficients_y = Setup_Coefficients(stages_y + 1);
 	coords_x = Setup_Coords(stages_x + 1);
@@ -144,28 +132,28 @@ void Waves::Integrator::Step()
 }
 
 // Compute the second order derivative of U in the x-direction using the Lobatto IIIA-IIIB stencils.
-void Waves::Integrator::Compute_U_xx(std::vector<Waves::Cell>::iterator it, std::vector<Waves::Cell>::iterator x_left, std::vector<Waves::Cell>::iterator x_right)
+void Waves::Integrator::Compute_U_xx(Waves::Cell& cell, const Waves::Cell& x_left, const Waves::Cell& x_right)
 {
 	// Function to apply the first coefficient stencil to the local cell centred on the main node (includes all values in cell to the left and first value in cell to right).
-	auto main_node_xx = [this](std::vector<double>::iterator it_xx, std::vector<double>::iterator it_U, std::vector<double>::iterator it_U_left, std::vector<double>::iterator it_U_right, std::vector<double>::iterator it_coefs) {
+	auto main_node_xx = [this](std::vector<double>::iterator it_xx, std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_left, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 		*it_xx = std::inner_product(it_U_left, it_U_left + stages_x, it_coefs,
 			std::inner_product(it_U, it_U + stages_x, it_coefs + stages_x, // *it_coefs has size 2*stages_x+1, so this selects the middle value
 				*it_U_right * *(it_coefs + 2 * stages_x))) / step_size_x / step_size_x;
 	};
 	// Funtion to apply the remaining coefficient stencils to the local cell (includes first value in cell to the right).
-	auto internal_node_xx = [this](std::vector<double>::iterator it_xx, std::vector<double>::iterator it_U, std::vector<double>::iterator it_U_right, std::vector<double>::iterator it_coefs) {
+	auto internal_node_xx = [this](std::vector<double>::iterator it_xx, std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 		*it_xx = std::inner_product(it_U, it_U + stages_x, it_coefs, *it_U_right * *(it_coefs + stages_x)) / step_size_x / step_size_x; // *it_coefs has size stages_x+1, so this selects the last value
 	};
 
 	// Apply the appropriate stencils based on the cell type.
-	switch ((*it).cell_type.first) {
+	switch (cell.cell_type.first) {
 		case Waves::Cell_Type::Normal:
 			for (std::iterator_traits<std::vector<double>::iterator>::difference_type offset = 0; offset != stages_y*stages_x; offset += stages_x) {
 				auto it_coefs = coefficients_x.begin();
-				main_node_xx((*it).U_xx.begin() + offset, (*it).U.begin() + offset, (*x_left).U.begin() + offset, (*x_right).U.begin() + offset, (*it_coefs).begin());
+				main_node_xx(cell.U_xx.begin() + offset, cell.U.begin() + offset, x_left.U.begin() + offset, x_right.U.begin() + offset, (*it_coefs).begin());
 				for (++it_coefs; it_coefs != coefficients_x.end(); ++it_coefs) {
 					auto offset2 = offset + std::distance(coefficients_x.begin(), it_coefs);
-					internal_node_xx((*it).U_xx.begin() + offset2, (*it).U.begin() + offset2, (*x_right).U.begin() + offset2, (*it_coefs).begin());
+					internal_node_xx(cell.U_xx.begin() + offset2, cell.U.begin() + offset2, x_right.U.begin() + offset2, (*it_coefs).begin());
 				}
 			}
 			break;
@@ -180,7 +168,7 @@ void Waves::Integrator::Compute_U_xx(std::vector<Waves::Cell>::iterator it, std:
 				//main_node_xx((*it).U_xx.begin() + offset, (*it).U.begin() + offset, (*x_left).U.begin() + offset, (*x_right).U.begin() + offset, (*it_coefs).begin());
 				for (++it_coefs; it_coefs != coefficients_x.end(); ++it_coefs) {
 					auto offset2 = offset + std::distance(coefficients_x.begin(), it_coefs);
-					internal_node_xx((*it).U_xx.begin() + offset2, (*it).U.begin() + offset2, (*x_right).U.begin() + offset2, (*it_coefs).begin());
+					internal_node_xx(cell.U_xx.begin() + offset2, cell.U.begin() + offset2, x_right.U.begin() + offset2, (*it_coefs).begin());
 				}
 			}
 			break;
@@ -198,7 +186,7 @@ void Waves::Integrator::Compute_U_xx(std::vector<Waves::Cell>::iterator it, std:
 				auto it_coefs = coefficients_x.begin() + 1;
 				for (; it_coefs != coefficients_x.end(); ++it_coefs) {
 					auto offset2 = offset + std::distance(coefficients_x.begin(), it_coefs);
-					internal_node_xx((*it).U_xx.begin() + offset2, (*it).U.begin() + offset2, (*x_right).U.begin() + offset2, (*it_coefs).begin());
+					internal_node_xx(cell.U_xx.begin() + offset2, cell.U.begin() + offset2, x_right.U.begin() + offset2, (*it_coefs).begin());
 				}
 			}
 			break;
@@ -211,10 +199,10 @@ void Waves::Integrator::Compute_U_xx(std::vector<Waves::Cell>::iterator it, std:
 }
 
 // Compute the second order derivative of U in the y-direction using the Lobatto IIIA-IIIB stencils.
-void Waves::Integrator::Compute_U_yy(std::vector<Waves::Cell>::iterator it, std::vector<Waves::Cell>::iterator y_left, std::vector<Waves::Cell>::iterator y_right)
+void Waves::Integrator::Compute_U_yy(Waves::Cell& cell, const Waves::Cell& y_left, const Waves::Cell& y_right)
 {
 	// Unfortunately, we can't use std::inner_product here as the relevant elements of U, etc., are not adjacent. So, here's a version that has non-unity step size, but with no bounds checking!
-	auto inner_product_n = [](std::vector<double>::iterator input1_start, std::vector<double>::iterator input2_start, size_t n, std::iterator_traits<std::vector<double>::iterator>::difference_type adv, double value) {
+	auto inner_product_n = [](std::vector<double>::const_iterator input1_start, std::vector<double>::const_iterator input2_start, size_t n, std::iterator_traits<std::vector<double>::const_iterator>::difference_type adv, double value) {
 		auto ret = value;
 		for (size_t i = 0; i != n - 1; ++n, std::advance(input1_start, adv), std::advance(input2_start, adv))
 			ret += *input1_start * *input2_start;
@@ -222,26 +210,26 @@ void Waves::Integrator::Compute_U_yy(std::vector<Waves::Cell>::iterator it, std:
 	};
 
 	// Function to apply the first coefficient stencil to the local cell centred on the main node (includes all values in cell to the left and first value in cell to right).
-	auto main_node_yy = [this, &inner_product_n](std::vector<double>::iterator it_xx, std::vector<double>::iterator it_U, std::vector<double>::iterator it_U_left, std::vector<double>::iterator it_U_right, std::vector<double>::iterator it_coefs) {
+	auto main_node_yy = [this, &inner_product_n](std::vector<double>::iterator it_xx, std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_left, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 		*it_xx = inner_product_n(it_U_left, it_coefs, stages_y, stages_x,
 			inner_product_n(it_U, it_coefs + stages_y, stages_y, stages_x, // *it_coefs has size 2*stages_x+1, so this selects the middle value
 				*it_U_right * *(it_coefs + 2 * stages_y))) / step_size_y / step_size_y;
 	};
 
 	// Function to apply the remaining coefficient stencils to the local cell (includes first value in cell to the right).
-	auto internal_node_yy = [this, &inner_product_n](std::vector<double>::iterator it_xx, std::vector<double>::iterator it_U, std::vector<double>::iterator it_U_right, std::vector<double>::iterator it_coefs) {
+	auto internal_node_yy = [this, &inner_product_n](std::vector<double>::iterator it_xx, std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 		*it_xx = inner_product_n(it_U, it_coefs, stages_y, stages_x, *it_U_right * *(it_coefs + stages_y)) / step_size_y / step_size_y; // *it_coefs has size stages_x+1, so this selects the last value
 	};
 
 	// Apply the appropriate stencils based on the cell type.
-	switch ((*it).cell_type.second) {
+	switch (cell.cell_type.second) {
 		case Waves::Cell_Type::Normal:
-			for (std::iterator_traits<std::vector<double>::iterator>::difference_type offset = 0; offset != stages_x; ++offset) {
+			for (std::iterator_traits<std::vector<double>::const_iterator>::difference_type offset = 0; offset != stages_x; ++offset) {
 				auto it_coefs = coefficients_y.begin();
-				main_node_yy((*it).U_yy.begin() + offset, (*it).U.begin() + offset, (*y_left).U.begin() + offset, (*y_right).U.begin() + offset, (*it_coefs).begin());
+				main_node_yy(cell.U_yy.begin() + offset, cell.U.begin() + offset, y_left.U.begin() + offset, y_right.U.begin() + offset, (*it_coefs).begin());
 				for (++it_coefs; it_coefs != coefficients_y.end(); ++it_coefs) {
 					auto offset2 = offset + std::distance(coefficients_y.begin(), it_coefs)*stages_x;
-					internal_node_yy((*it).U_yy.begin() + offset2, (*it).U.begin() + offset2, (*y_right).U.begin() + offset2, (*it_coefs).begin());
+					internal_node_yy(cell.U_yy.begin() + offset2, cell.U.begin() + offset2, y_right.U.begin() + offset2, (*it_coefs).begin());
 				}
 			}
 			break;
@@ -256,7 +244,7 @@ void Waves::Integrator::Compute_U_yy(std::vector<Waves::Cell>::iterator it, std:
 				//main_node_xx((*it).U_yy.begin() + offset, (*it).U.begin() + offset, (*y_left).U.begin() + offset, (*y_right).U.begin() + offset, (*it_coefs).begin());
 				for (++it_coefs; it_coefs != coefficients_y.end(); ++it_coefs) {
 					auto offset2 = offset + std::distance(coefficients_y.begin(), it_coefs)*stages_x;
-					internal_node_yy((*it).U_yy.begin() + offset2, (*it).U.begin() + offset2, (*y_right).U.begin() + offset2, (*it_coefs).begin());
+					internal_node_yy(cell.U_yy.begin() + offset2, cell.U.begin() + offset2, y_right.U.begin() + offset2, (*it_coefs).begin());
 				}
 			}
 			break;
@@ -274,7 +262,7 @@ void Waves::Integrator::Compute_U_yy(std::vector<Waves::Cell>::iterator it, std:
 				auto it_coefs = coefficients_y.begin() + 1;
 				for (; it_coefs != coefficients_y.end(); ++it_coefs) {
 					auto offset2 = offset + std::distance(coefficients_y.begin(), it_coefs)*stages_x;
-					internal_node_yy((*it).U_yy.begin() + offset2, (*it).U.begin() + offset2, (*y_right).U.begin() + offset2, (*it_coefs).begin());
+					internal_node_yy(cell.U_yy.begin() + offset2, cell.U.begin() + offset2, y_right.U.begin() + offset2, (*it_coefs).begin());
 				}
 			}
 			break;
@@ -289,84 +277,89 @@ void Waves::Integrator::Compute_U_yy(std::vector<Waves::Cell>::iterator it, std:
 // Update variables that depend on U (i.e. U_xx and U_yy).
 void Waves::Integrator::update_U_dependent_variables()
 {
-	// Note: A slight waste of processing power here as we only exclude Inactive cells. We could use the update mask from Generate_Update_Mask(), but this would probably be more expensive.
+	for (long c = 0; c < adjacency_information.size(); ++c) {
+		Compute_U_xx(cells[c], cells[adjacency_information[c][0]], cells[adjacency_information[c][1]]);
+		Compute_U_yy(cells[c], cells[adjacency_information[c][2]], cells[adjacency_information[c][3]]);
+	}
 
-	// We use an external iterator instead of a range-for loop as we need to be aware of the target cell's location and whom its neighbours are.
-	auto it = cells.begin();
-	// Some local iterators for referencing the neighbouring cells (starting in the left,left corner).
-	auto x_left{ it + (domain_size_x - 1) };
-	auto x_right{ it + 1 };
-	auto y_left{ it + (domain_size_y - 1)*domain_size_x };
-	auto y_right{ it + domain_size_x };
+	//// Note: A slight waste of processing power here as we only exclude Inactive cells. We could use the update mask from Generate_Update_Mask(), but this would probably be more expensive.
 
-	// left,left corner
-	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-		Compute_U_xx(it, x_left, x_right);
-		Compute_U_yy(it, y_left, y_right);
-	}
-	// centre,left
-	for (x_left = it, it = x_right++, ++y_left, ++y_right; it != cells.begin() + domain_size_x - 1; x_left = it, it = x_right++, ++y_left, ++y_right)
-	{
-		if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-			Compute_U_xx(it, x_left, x_right);
-			Compute_U_yy(it, y_left, y_right);
-		}
-	}
-	// right,left corner
-	x_right = it - (domain_size_x - 1);
-	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-		Compute_U_xx(it, x_left, x_right);
-		Compute_U_yy(it, y_left, y_right);
-	}
-	for (auto row = 2; row != domain_size_y; ++row) {
-		// left, centre
-		++it;
-		x_left = it + domain_size_x - 1;
-		x_right = it + 1;
-		y_left = it - domain_size_x;
-		y_right = it + domain_size_x;
-		if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-			Compute_U_xx(it, x_left, x_right);
-			Compute_U_yy(it, y_left, y_right);
-		}
-		// centre, centre
-		for (x_left = it, it = x_right++, ++y_left, ++y_right; it != cells.begin() + row*domain_size_x - 1; x_left = it, it = x_right++, ++y_left, ++y_right) {
-			if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-				Compute_U_xx(it, x_left, x_right);
-				Compute_U_yy(it, y_left, y_right);
-			}
-		}
-		// right, centre
-		x_right = it - (domain_size_x - 1);
-		if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-			Compute_U_xx(it, x_left, x_right);
-			Compute_U_yy(it, y_left, y_right);
-		}
-	}
-	// left,right corner
-	++it;
-	x_left = it + (domain_size_x - 1);
-	x_right = it + 1;
-	y_left = it - domain_size_x;
-	y_right = it - domain_size_x*(domain_size_y - 1);
-	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-		Compute_U_xx(it, x_left, x_right);
-		Compute_U_yy(it, y_left, y_right);
-	}
-	// centre,right
-	for (x_left = it, it = x_right++, ++y_left, ++y_right; it != cells.end() - 1; x_left = it, it = x_right++, ++y_left, ++y_right)
-	{
-		if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-			Compute_U_xx(it, x_left, x_right);
-			Compute_U_yy(it, y_left, y_right);
-		}
-	}
-	// right,right
-	x_right = it - domain_size_x + 1;
-	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
-		Compute_U_xx(it, x_left, x_right);
-		Compute_U_yy(it, y_left, y_right);
-	}
+	//// We use an external iterator instead of a range-for loop as we need to be aware of the target cell's location and whom its neighbours are.
+	//auto it = cells.begin();
+	//// Some local iterators for referencing the neighbouring cells (starting in the left,left corner).
+	//auto x_left{ it + (domain_size_x - 1) };
+	//auto x_right{ it + 1 };
+	//auto y_left{ it + (domain_size_y - 1)*domain_size_x };
+	//auto y_right{ it + domain_size_x };
+
+	//// left,left corner
+	//if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//	Compute_U_xx(it, x_left, x_right);
+	//	Compute_U_yy(it, y_left, y_right);
+	//}
+	//// centre,left
+	//for (x_left = it, it = x_right++, ++y_left, ++y_right; it != cells.begin() + domain_size_x - 1; x_left = it, it = x_right++, ++y_left, ++y_right)
+	//{
+	//	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//		Compute_U_xx(it, x_left, x_right);
+	//		Compute_U_yy(it, y_left, y_right);
+	//	}
+	//}
+	//// right,left corner
+	//x_right = it - (domain_size_x - 1);
+	//if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//	Compute_U_xx(it, x_left, x_right);
+	//	Compute_U_yy(it, y_left, y_right);
+	//}
+	//for (auto row = 2; row != domain_size_y; ++row) {
+	//	// left, centre
+	//	++it;
+	//	x_left = it + domain_size_x - 1;
+	//	x_right = it + 1;
+	//	y_left = it - domain_size_x;
+	//	y_right = it + domain_size_x;
+	//	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//		Compute_U_xx(it, x_left, x_right);
+	//		Compute_U_yy(it, y_left, y_right);
+	//	}
+	//	// centre, centre
+	//	for (x_left = it, it = x_right++, ++y_left, ++y_right; it != cells.begin() + row*domain_size_x - 1; x_left = it, it = x_right++, ++y_left, ++y_right) {
+	//		if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//			Compute_U_xx(it, x_left, x_right);
+	//			Compute_U_yy(it, y_left, y_right);
+	//		}
+	//	}
+	//	// right, centre
+	//	x_right = it - (domain_size_x - 1);
+	//	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//		Compute_U_xx(it, x_left, x_right);
+	//		Compute_U_yy(it, y_left, y_right);
+	//	}
+	//}
+	//// left,right corner
+	//++it;
+	//x_left = it + (domain_size_x - 1);
+	//x_right = it + 1;
+	//y_left = it - domain_size_x;
+	//y_right = it - domain_size_x*(domain_size_y - 1);
+	//if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//	Compute_U_xx(it, x_left, x_right);
+	//	Compute_U_yy(it, y_left, y_right);
+	//}
+	//// centre,right
+	//for (x_left = it, it = x_right++, ++y_left, ++y_right; it != cells.end() - 1; x_left = it, it = x_right++, ++y_left, ++y_right)
+	//{
+	//	if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//		Compute_U_xx(it, x_left, x_right);
+	//		Compute_U_yy(it, y_left, y_right);
+	//	}
+	//}
+	//// right,right
+	//x_right = it - domain_size_x + 1;
+	//if ((*it).cell_type.first != Waves::Cell_Type::Inactive) {
+	//	Compute_U_xx(it, x_left, x_right);
+	//	Compute_U_yy(it, y_left, y_right);
+	//}
 }
 
 // Update variables that depend on V (i.e. nothing).
@@ -378,59 +371,99 @@ void Waves::Integrator::update_V_dependent_variables()
 float Waves::Integrator::Change_Initial_Conditions(int ic)
 { // Change the initial conditions
 	float hint = 1.0f; // Hint for the z-scaling factor in the renderer.
-	if (ic == -1) {
+	if (ic == -1)
 		++initial_conditions;
-	}
 	else
 		initial_conditions = ic;
 
+	// Re-initialise the cells.
+	for (auto& cell : cells) {
+		cell.U.resize(stages_x*stages_y);
+		cell.V.resize(stages_x*stages_y);
+		cell.U_xx.resize(stages_x*stages_y);
+		cell.U_yy.resize(stages_x*stages_y);
+	}
+
 	switch (initial_conditions) {
 		case 0: // Single frequency
-			for (auto it = cells.begin(); it != cells.end(); ++it) {
-				auto it_U = (*it).U.begin();
-				auto it_V = (*it).V.begin();
-				for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
-					auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x; // [0,1)
-					auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y; // [0,1)
-					// u=cos(2*PI*(t+c1*x+c2*y)), which has a wave speed of sqrt(c1^2+c2^2)
-					*it_U = cos(4.0*PI*(x + y));
-					// set V to be the derivative of U to get a travelling wave train (actually -ve direction)
-					*it_V = -4.0*PI / g_waves.wave_speed * std::sqrt(static_cast<double>(domain_size_x*step_size_x) + static_cast<double>(domain_size_y*step_size_y))*std::sin(4.0*PI*(x + y));
-				}
+			for (long c = 0; c < position_information.size(); ++c) {
+				for (int j = 0; j < stages_y; ++j)
+					for (int i = 0; i < stages_x; ++i) {
+						auto x = (position_information[c][0] + coords_x[i] * step_size_x) / 100; // [-1,1)
+						auto y = (position_information[c][1] + coords_y[j] * step_size_y) / 100; // [-1,1)
+						// u=cos(2*PI*(t+c1*x+c2*y)), which has a wave speed of sqrt(c1^2+c2^2)
+						cells[c].U[j*stages_x + i] = cos(4.0*PI*(x + y));
+						// set V to be the derivative of U to get a travelling wave train (actually -ve direction)
+						cells[c].V[j*stages_x + i] = -4.0*PI / g_waves.wave_speed * std::sqrt(static_cast<double>(200 * step_size_x) + static_cast<double>(200 * step_size_y))*std::sin(4.0*PI*(x + y));
+					}
 			}
+			//for (auto it = cells.begin(); it != cells.end(); ++it) {
+			//	auto it_U = (*it).U.begin();
+			//	auto it_V = (*it).V.begin();
+			//	for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
+			//		auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x; // [0,1)
+			//		auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y; // [0,1)
+			//		// u=cos(2*PI*(t+c1*x+c2*y)), which has a wave speed of sqrt(c1^2+c2^2)
+			//		*it_U = cos(4.0*PI*(x + y));
+			//		// set V to be the derivative of U to get a travelling wave train (actually -ve direction)
+			//		*it_V = -4.0*PI / g_waves.wave_speed * std::sqrt(static_cast<double>(domain_size_x*step_size_x) + static_cast<double>(domain_size_y*step_size_y))*std::sin(4.0*PI*(x + y));
+			//	}
+			//}
 			hint = 0.5f;
 			break;
 		case 1: // Continuous spectrum of frequencies
-			for (auto it = cells.begin(); it != cells.end(); ++it) {
-				auto it_U = (*it).U.begin();
-				auto it_V = (*it).V.begin();
-				for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
-					auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x; // [0,1)
-					auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_y[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y; // [0,1)
-					// this choice should be zero along the edge of the domain but non-zero everywhere else
-					*it_U = 0.0625*(std::exp(std::sin((4.0*x - 0.5)*PI) + 1.0) - 1.0)*(std::exp(std::sin((2.0*y - 0.5)*PI) + 1.0) - 1.0);
-					// start with stationary surface
-					*it_V = 0.0;
-				}
+			for (long c = 0; c < position_information.size(); ++c) {
+				for (int j = 0; j < stages_y; ++j)
+					for (int i = 0; i < stages_x; ++i) {
+						auto x = (position_information[c][0] + coords_x[i] * step_size_x) / 200; // [-1,1)
+						auto y = (position_information[c][1] + coords_y[j] * step_size_y) / 200; // [-1,1)
+						// this choice should be zero along the edge of the domain but non-zero everywhere else
+						cells[c].U[j*stages_x + i] = 0.0625*(std::exp(std::sin((4.0*x - 0.5)*PI) + 1.0) - 1.0)*(std::exp(std::sin((2.0*y - 0.5)*PI) + 1.0) - 1.0);
+						// start with stationary surface
+						cells[c].V[j*stages_x + i] = 0.0;
+					}
 			}
+			//for (auto it = cells.begin(); it != cells.end(); ++it) {
+			//	auto it_U = (*it).U.begin();
+			//	auto it_V = (*it).V.begin();
+			//	for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
+			//		auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x; // [0,1)
+			//		auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_y[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y; // [0,1)
+			//		// this choice should be zero along the edge of the domain but non-zero everywhere else
+			//		*it_U = 0.0625*(std::exp(std::sin((4.0*x - 0.5)*PI) + 1.0) - 1.0)*(std::exp(std::sin((2.0*y - 0.5)*PI) + 1.0) - 1.0);
+			//		// start with stationary surface
+			//		*it_V = 0.0;
+			//	}
+			//}
 			break;
 		case 2: // Continuous spectrum of frequencies, but limited to localised hump in the middle
 		{
 			// u=exp(f(x,y))-1, where f(x,y)=c*(1-x^2/bx^2-y^2/by^2)
 			// note: if c/bx^2 or c/by^2 is too large then the integrator will break due to a CFL condition!
 			double bx = 0.3*step_size_x, by = 0.3*step_size_y, c = 1.5, x0 = 0.0, y0 = 0.0;
-			for (auto it = cells.begin(); it != cells.end(); ++it) {
-				auto it_U = (*it).U.begin();
-				auto it_V = (*it).V.begin();
-				for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
-					auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x * step_size_x * 2.0 - step_size_x; // [-dx,dx)
-					auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_y[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y * step_size_y * 2.0 - step_size_y; // [-dy,dy)
-					// this choice should be zero along the edge of the domain but non-zero everywhere else
-					*it_U = std::max(0.0, std::exp(c - c / bx / bx*(x - x0)*(x - x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
-					// start with stationary surface
-					*it_V = 0.0;
-				}
+			for (long c = 0; c < position_information.size(); ++c) {
+				for (int j = 0; j < stages_y; ++j)
+					for (int i = 0; i < stages_x; ++i) {
+						auto x = (position_information[c][0] + coords_x[i] * step_size_x) / 200 * step_size_x; // [-dx,dx)
+						auto y = (position_information[c][1] + coords_y[j] * step_size_y) / 200 * step_size_y; // [-dy,dy)
+						// this choice should be zero along the edge of the domain but non-zero everywhere else
+						cells[c].U[j*stages_x + i] = std::max(0.0, std::exp(c - c / bx / bx*(x - x0)*(x - x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
+						// start with stationary surface
+						cells[c].V[j*stages_x + i] = 0.0;
+					}
 			}
+			//for (auto it = cells.begin(); it != cells.end(); ++it) {
+			//	auto it_U = (*it).U.begin();
+			//	auto it_V = (*it).V.begin();
+			//	for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
+			//		auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x * step_size_x * 2.0 - step_size_x; // [-dx,dx)
+			//		auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_y[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y * step_size_y * 2.0 - step_size_y; // [-dy,dy)
+			//		// this choice should be zero along the edge of the domain but non-zero everywhere else
+			//		*it_U = std::max(0.0, std::exp(c - c / bx / bx*(x - x0)*(x - x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
+			//		// start with stationary surface
+			//		*it_V = 0.0;
+			//	}
+			//}
 		}
 		break;
 		case 3: // Continuous spectrum of frequencies, but limited to 2 localised humps. (Best used with BC=4 once it has been implemented.)
@@ -438,21 +471,35 @@ float Waves::Integrator::Change_Initial_Conditions(int ic)
 			// u=exp(f(x,y))-1, where f(x,y)=c*(1-x^2/bx^2-y^2/by^2)
 			// note: if c/bx^2 or c/by^2 is too large then the integrator will break due to a CFL condition!
 			double bx = 0.2*step_size_x, by = 0.2*step_size_y, c = 1.5, x0 = 0.49, y0 = 0.0;
-			for (auto it = cells.begin(); it != cells.end(); ++it) {
-				auto it_U = (*it).U.begin();
-				auto it_V = (*it).V.begin();
-				for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
-					auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x * step_size_x * 2.0 - step_size_x; // [-dx,dx)
-					auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_y[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y * step_size_y * 2.0 - step_size_y; // [-dy,dy)
-					// this choice should be zero along the edge of the domain but non-zero everywhere else
-					if (x > 0)
-						*it_U = std::max(0.0, std::exp(c - c / bx / bx*(x - x0)*(x - x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
-					else
-						*it_U = std::max(0.0, std::exp(c - c / bx / bx*(x + x0)*(x + x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
-					// start with stationary surface
-					*it_V = 0.0;
-				}
+			for (long c = 0; c < position_information.size(); ++c) {
+				for (int j = 0; j < stages_y; ++j)
+					for (int i = 0; i < stages_x; ++i) {
+						auto x = (position_information[c][0] + coords_x[i] * step_size_x) / 200 * step_size_x; // [-dx,dx)
+						auto y = (position_information[c][1] + coords_y[j] * step_size_y) / 200 * step_size_y; // [-dy,dy)
+						// this choice should be zero along the edge of the domain but non-zero everywhere else
+						if(x>0)
+							cells[c].U[j*stages_x + i] = std::max(0.0, std::exp(c - c / bx / bx*(x - x0)*(x - x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
+						else
+							cells[c].U[j*stages_x + i] = std::max(0.0, std::exp(c - c / bx / bx*(x + x0)*(x + x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
+						// start with stationary surface
+						cells[c].V[j*stages_x + i] = 0.0;
+					}
 			}
+			//for (auto it = cells.begin(); it != cells.end(); ++it) {
+			//	auto it_U = (*it).U.begin();
+			//	auto it_V = (*it).V.begin();
+			//	for (; it_U != (*it).U.end(); ++it_U, ++it_V) {
+			//		auto x = (static_cast<double>(std::distance(cells.begin(), it) % domain_size_x) + coords_x[std::distance((*it).U.begin(), it_U) % stages_x]) / domain_size_x * step_size_x * 2.0 - step_size_x; // [-dx,dx)
+			//		auto y = (static_cast<double>(std::distance(cells.begin(), it) / domain_size_x) + coords_y[std::distance((*it).U.begin(), it_U) / stages_x]) / domain_size_y * step_size_y * 2.0 - step_size_y; // [-dy,dy)
+			//		// this choice should be zero along the edge of the domain but non-zero everywhere else
+			//		if (x > 0)
+			//			*it_U = std::max(0.0, std::exp(c - c / bx / bx*(x - x0)*(x - x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
+			//		else
+			//			*it_U = std::max(0.0, std::exp(c - c / bx / bx*(x + x0)*(x + x0) - c / by / by*(y - y0)*(y - y0)) - 1.0);
+			//		// start with stationary surface
+			//		*it_V = 0.0;
+			//	}
+			//}
 		}
 		break;
 		default: // We've reached the end or been given a wrong value, reset to the first initial condition.
@@ -467,37 +514,92 @@ float Waves::Integrator::Change_Initial_Conditions(int ic)
 // Switch to a new set of boundary conditions. (FIXME: Only the first two have been implemented so far.)
 void Waves::Integrator::Change_Boundary_Conditions(int bc)
 { // Change the boundary conditons
-	if (bc == -1) {
+	if (bc == -1)
 		++boundary_conditions;
-	}
 	else
 		boundary_conditions = bc;
 
 	switch (boundary_conditions) {
 		case 0: // Periodic square boundary.
-			for (auto& cell : cells)
-				cell.cell_type = std::make_pair(Waves::Cell_Type::Normal, Waves::Cell_Type::Normal);
-			break;
-		case 1: // Square with Dirichlet boundaries.
-			// Set everything to Normal then modify the boundaries.
-			// FIXME: This is not entirely correct yet.
-			for (auto& cell : cells)
-				cell.cell_type = std::make_pair(Waves::Cell_Type::Normal, Waves::Cell_Type::Normal);
-			{
-				auto it = cells.begin();
-				for (; it != cells.begin() + domain_size_x; ++it)
-					(*it).cell_type.second = Waves::Cell_Type::Dirichlet_left; // y_left
-				for (it = cells.begin() + domain_size_x*(domain_size_y - 1); it != cells.end(); ++it)
-					(*it).cell_type.second = Waves::Cell_Type::Dirichlet_right; // y_right
-				for (it = cells.begin(); it != cells.begin() + domain_size_x*(domain_size_y - 1); std::advance(it, domain_size_x))
-					(*it).cell_type.first = Waves::Cell_Type::Dirichlet_left; // x_left
-				(*it).cell_type.first = Waves::Cell_Type::Dirichlet_left; // x_left final point
-				for (it = cells.begin() + domain_size_x - 1; it != cells.end() - 1; std::advance(it, domain_size_x))
-					(*it).cell_type.first = Waves::Cell_Type::Dirichlet_right; // x_right
-				(*it).cell_type.first = Waves::Cell_Type::Dirichlet_right; // x_right final point
+			/*
+			200 * 200 square domain with periodic boundary conditions
+			dx = dy = 1
+			wave_speed = 10^2
+			*/
+			long n = 200;
+			cells.clear();
+			adjacency_information.clear();
+			position_information.clear();
+			step_size_x = 1.0;
+			step_size_y = 1.0;
+			wave_speed = 10.0;
+			for (long j = 0; j < n; ++j) {
+				for (long i = 0; i < n; ++i) {
+					cells.emplace_back(std::make_pair(Waves::Cell_Type::Normal, Waves::Cell_Type::Normal));
+					adjacency_information.emplace_back(n * j + (i + n - 1) % n, n * j + (i + 1) % n, n * ((j + n - 1) % n) + i, n * ((j + 1) % n) + i);
+					position_information.emplace_back(i*step_size_x - n / 2 * step_size_x, j*step_size_y - n / 2 * step_size_y);
+				}
 			}
 			break;
-			//c1
+		case 1: // Square with Dirichlet boundaries.
+			/*
+			200 * 200 square domain with Dirichlet boundary conditions
+			dx = dy = 1
+			wave_speed = 10^2
+			*/
+			long n = 200;
+			cells.clear();
+			adjacency_information.clear();
+			position_information.clear();
+			step_size_x = 1.0;
+			step_size_y = 1.0;
+			wave_speed = 10.0;
+
+			// left,left corner
+			cells.emplace_back(std::make_pair(Waves::Cell_Type::Dirichlet_left, Waves::Cell_Type::Dirichlet_left));
+			adjacency_information.emplace_back(std::array<long, 4>{-1, 1, -1, n});
+			position_information.emplace_back(std::array<double, 2>{-n / 2 * step_size_x, -n / 2 * step_size_y});
+			// center,left
+			for (long i = 1; i < n - 1; ++i) {
+				cells.emplace_back(std::make_pair(Waves::Cell_Type::Normal, Waves::Cell_Type::Dirichlet_left));
+				adjacency_information.emplace_back(std::array<long, 4>{i - 1, i + 1, -1, n + i});
+				position_information.emplace_back(std::array<double, 2>{i*step_size_x - n / 2 * step_size_x, -n / 2 * step_size_y});
+			}
+			// right,left corner
+			cells.emplace_back(std::make_pair(Waves::Cell_Type::Dirichlet_right, Waves::Cell_Type::Dirichlet_left));
+			adjacency_information.emplace_back(std::array<long, 4>{n - 2, -1, -1, 2 * n - 1});
+			position_information.emplace_back(std::array<double, 2>{(n - 1)*step_size_x - n / 2 * step_size_x, -n / 2 * step_size_y});
+			for (long j = 1; j < n - 1; ++j) {
+				// left,center
+				cells.emplace_back(std::make_pair(Waves::Cell_Type::Dirichlet_left, Waves::Cell_Type::Normal));
+				adjacency_information.emplace_back(std::array<long, 4>{-1, n * j + 1, n * (j - 1), n * (j + 1)});
+				position_information.emplace_back(std::array<double, 2>{-n / 2 * step_size_x, j*step_size_y - n / 2 * step_size_y});
+				// center,center
+				for (long i = 1; i < n - 1; ++i) {
+					cells.emplace_back(std::make_pair(Waves::Cell_Type::Normal, Waves::Cell_Type::Normal));
+					adjacency_information.emplace_back(std::array<long, 4>{n * j + (i + n - 1) % n, n * j + (i + 1) % n, n * ((j + n - 1) % n) + i, n * ((j + 1) % n) + i});
+					position_information.emplace_back(std::array<double, 2>{i*step_size_x - n / 2 * step_size_x, j*step_size_y - n / 2 * step_size_y});
+				}
+				// right,center
+				cells.emplace_back(std::make_pair(Waves::Cell_Type::Dirichlet_right, Waves::Cell_Type::Normal));
+				adjacency_information.emplace_back(std::array<long, 4>{n * j + n - 2, -1, n * (j - 1), n * (j + 1)});
+				position_information.emplace_back(std::array<double, 2>{(n - 1)*step_size_x - n / 2 * step_size_x, j*step_size_y - n / 2 * step_size_y});
+			}
+			// left,right corner
+			cells.emplace_back(std::make_pair(Waves::Cell_Type::Dirichlet_left, Waves::Cell_Type::Dirichlet_right));
+			adjacency_information.emplace_back(std::array<long, 4>{-1, n * (n - 1) + 1, n * (n - 2), -1});
+			position_information.emplace_back(std::array<double, 2>{-n / 2 * step_size_x, (n - 1)*step_size_y - n / 2 * step_size_y});
+			// center,right
+			for (long i = 1; i < n - 1; ++i) {
+				cells.emplace_back(std::make_pair(Waves::Cell_Type::Normal, Waves::Cell_Type::Dirichlet_right));
+				adjacency_information.emplace_back(std::array<long, 4>{i - 1, i + 1, n * (n - 2) + i, -1});
+				position_information.emplace_back(std::array<double, 2>{i*step_size_x - n / 2 * step_size_x, (n - 1)*step_size_y - n / 2 * step_size_y});
+			}
+			// right,right corner
+			cells.emplace_back(std::make_pair(Waves::Cell_Type::Dirichlet_right, Waves::Cell_Type::Dirichlet_right));
+			adjacency_information.emplace_back(std::array<long, 4>{n - 2, -1, n * (n - 2), -1});
+			position_information.emplace_back(std::array<double, 2>{(n - 1)*step_size_x - n / 2 * step_size_x, (n - 1)*step_size_y - n / 2 * step_size_y});
+			break;
 			//case 3: // Circle with a cusp, Dirichlet boundaries
 			//{
 			//	double r = 1, r2 = 0.51;
@@ -601,6 +703,6 @@ std::vector<double> Waves::Integrator::Setup_Coords(int stages)
 
 std::ostream& Waves::operator<< (std::ostream& os, const Waves::Integrator& integrator)
 {
-	os << "A " << integrator.domain_size_x << "x" << integrator.domain_size_y << " grid with dx=" << integrator.step_size_x << ", dy=" << integrator.step_size_y << ", " << integrator.stages_x << " stages in x, " << integrator.stages_y << " stages in y, and time step " << integrator.step_size_time << ".";
+	os << "dx=" << integrator.step_size_x << ", dy=" << integrator.step_size_y << ", " << integrator.stages_x << " stages in x, " << integrator.stages_y << " stages in y, and time step " << integrator.step_size_time << ".";
 	return os;
 }

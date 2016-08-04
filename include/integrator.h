@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 #include <iostream>
 
 namespace Waves {
@@ -20,6 +21,7 @@ namespace Waves {
 	public:
 		std::pair<Cell_Type, Cell_Type> cell_type; // boundary condition types in x (first) and y (second) directions
 		std::vector<double> U, V, U_xx, U_yy;
+		Cell(std::pair<Cell_Type, Cell_Type> type) : cell_type(type) {};
 	};
 
 	// The integrator class.
@@ -43,8 +45,8 @@ namespace Waves {
 		std::vector<double> Setup_Coords(int r);
 
 		// Compute second-order spatial derivatives of U.
-		inline void Compute_U_xx(std::vector<Waves::Cell>::iterator it, std::vector<Waves::Cell>::iterator x_left, std::vector<Waves::Cell>::iterator x_right);
-		inline void Compute_U_yy(std::vector<Waves::Cell>::iterator it, std::vector<Waves::Cell>::iterator y_left, std::vector<Waves::Cell>::iterator y_right);
+		inline void Compute_U_xx(Waves::Cell& cell, const Waves::Cell& x_left, const Waves::Cell& x_right);
+		inline void Compute_U_yy(Waves::Cell& cell, const Waves::Cell& y_left, const Waves::Cell& y_right);
 
 		// Components of the integrator.
 		void Step_U(double step_size);
@@ -53,15 +55,17 @@ namespace Waves {
 		void update_V_dependent_variables();
 
 	public:
-		unsigned int domain_size_x, domain_size_y; // Number of cells in each direction.
 		std::vector<Waves::Cell> cells; // Variables in the PDE (including derivatives and other useful values) for each cell.
+		// We keep the following information arrays separate from the cells to minimise the memory footprint of the cells.
+		std::vector<std::array<long, 4>> adjacency_information; // -1 indicates no adjacent cell (i.e. for boundary cells)
+		std::vector<std::array<double, 2>> position_information;
 		double Time = 0.0; // Time the system has evolved for.
 		void Step(); // Step forwards in time, i.e., the integrator.
 		float Change_Initial_Conditions(int ic = -1); // Defaults to switching to the next initial condition.
 		void Change_Boundary_Conditions(int bc = -1); // Defaults to switching to the next initial condition.
 
 		// Initialise the Integrator.
-		float Initialise(int m, int n, int rx, int ry, double dx, double dy, double dt, double ws, int ic, int bc);
+		float Initialise(int rx, int ry, double dt, int ic, int bc);
 
 		// Friendly ostream operator<< so it can access private variables.
 		friend std::ostream& operator<< (std::ostream& os, const Integrator& integrator);
