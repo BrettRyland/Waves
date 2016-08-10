@@ -7,13 +7,13 @@
 namespace Waves {
 	/* A differentiation of cell types for use in describing boundary conditions.
 		Normal          = A cell with no special boundary conditions.
-		Inactive        = A cell outside the domain (so we can ignore it).
+		Periodic		= The same as normal, but for a top or right edge cell that wraps around periodically (needed for rendering purposes).
 		Dirichlet_left  = Main node is constant, other nodes are normal.
 		Dirichlet_right = Main node is constant, other nodes are outside the domain.
 		Neumann_left    = Main node uses phantom points on the left in computations, other nodes are normal.
 		Neumann_right   = Main node uses phantom points on the right in computations, other nodes are outside the domain.
 	*/
-	enum class Cell_Type { Normal, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right };
+	enum class Cell_Type { Normal, Periodic, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right };
 	// The basic cell within the domain resulting from applying Lobatto IIIA-IIIB discretisation in space (x,y).
 	// Each cell has stages_x * stages_y nodes.
 	class Cell

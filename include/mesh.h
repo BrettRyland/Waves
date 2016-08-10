@@ -9,7 +9,7 @@ namespace Waves::Mesh {
 	struct surface_mesh {
 		GLuint vertex_buffer, element_buffer;
 		GLsizei vertex_count, element_count;
-		std::vector<std::array<unsigned int, 2>> adjacency_information;
+		std::vector<std::array<unsigned int, 3>> adjacency_information;
 	};
 
 	// The structure of each vertex element.
@@ -27,7 +27,7 @@ namespace Waves::Mesh {
 	// Generate a surface mesh (later assigned to g_resoures.surface_vertex_array).
 	std::vector<surface_vertex> init_surface_mesh(surface_mesh& out_mesh);
 	// Update the surface_vertex data based on the updated values of the integrator Waves::g_waves.
-	void calculate_surface_vertex(std::vector<surface_vertex>& vertex_data, const std::vector<std::array<unsigned int, 2>>& adjacency_information);
+	void calculate_surface_vertex(std::vector<surface_vertex>& vertex_data, const std::vector<std::array<unsigned int, 3>>& adjacency_information);
 	// Pass the updated surface_vertex data to the shader program.
 	void update_surface_mesh(const surface_mesh& mesh, std::vector<surface_vertex>& vertex_data);
 }

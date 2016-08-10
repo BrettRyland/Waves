@@ -52,7 +52,7 @@ namespace Waves::Mesh {
 		std::vector<surface_vertex> vertex_data(vertex_count); // under estimate, but it will grow as needed.
 		std::vector<GLuint> element_data;
 		element_data.reserve(6 * g_waves.cells.size());
-		out_mesh.adjacency_information.clear();
+		out_mesh.adjacency_information.resize(vertex_count);
 		int s, t, i;
 		GLuint index;
 		GLfloat scale{ 5.0f };
@@ -60,56 +60,119 @@ namespace Waves::Mesh {
 		// Assign the components of the position, normal, shininess and specular values, adding in extra vertices as necessary.
 		// The non-static components (position[2] and normal[0-2]) are reassigned in calculate_surface_vertex().
 		// FIXME: We should not draw cells for Dirichlet_right and Neumann_right.
-		// FIXME: We need to detect periodicity and draw extra cells instead.
 		for (unsigned int c = 0; c < g_waves.cells.size(); ++c) {
 			vertex_data[c] = { static_cast<GLfloat>(g_waves.position_information[c][0]), static_cast<GLfloat>(g_waves.position_information[c][1]) };
-			if (g_waves.adjacency_information[c][1] != missing_index && g_waves.adjacency_information[c][3] != missing_index) { // right and top edges are there
-				out_mesh.adjacency_information.emplace_back(std::array<unsigned int, 2>{static_cast<GLuint>(g_waves.adjacency_information[c][1]), static_cast<GLuint>(g_waves.adjacency_information[c][3])});
-				if (g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] != missing_index) { // top right is also there
-					element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[c][1], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3], g_waves.adjacency_information[c][3] });
-				}
-				else { // top right is missing
-					vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-					element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][3] });
-					++vertex_count;
-				}
-			}
-			else if (g_waves.adjacency_information[c][3] == missing_index && g_waves.adjacency_information[c][1] == missing_index) { // both edges missing (and hence top right corner missing too since it is disconnected)
-				vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1]) });
-				vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0]),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-				vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-				element_data.insert(element_data.end(), { c, vertex_count, vertex_count + 1, vertex_count, vertex_count + 2, vertex_count + 1 });
-				out_mesh.adjacency_information.emplace_back(std::array<unsigned int, 2>{vertex_count, vertex_count + 1});
-				vertex_count += 3;
-			}
-			else if ((g_waves.adjacency_information[c][1] == missing_index) && (g_waves.adjacency_information[c][3] != missing_index)) { // right is missing, but top is there
-				vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1]) });
-				out_mesh.adjacency_information.emplace_back(std::array<unsigned int, 2>{ {vertex_count, g_waves.adjacency_information[c][3]}});
-				if (g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1] == missing_index) { // top right is missing
-					vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-					element_data.insert(element_data.end(), { c, vertex_count, g_waves.adjacency_information[c][3], vertex_count, vertex_count + 1, g_waves.adjacency_information[c][3] });
-					vertex_count += 2;
-				}
-				else { // top right is there
-					element_data.insert(element_data.end(), { c, vertex_count, g_waves.adjacency_information[c][3], vertex_count, g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1], g_waves.adjacency_information[c][3] });
-					++vertex_count;
-				}
-			}
-			else if ((g_waves.adjacency_information[c][1] != missing_index) && (g_waves.adjacency_information[c][3] == missing_index)) { // top is missing, but right is there
-				vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0]),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-				out_mesh.adjacency_information.emplace_back(std::array<unsigned int, 2>{g_waves.adjacency_information[c][1], vertex_count});
-				if (g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] == missing_index) { // top right is missing
-					vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-					element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][1], vertex_count + 1, vertex_count });
-					vertex_count += 2;
-				}
-				else { // top right is there
-					element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][1], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3], vertex_count });
-					++vertex_count;
-				}
-			}
-			else {
-				throw std::runtime_error("Oops, we shouldn't be here.");
+			switch (g_waves.cells[c].cell_type.first) {
+				case Cell_Type::Normal:
+				case Cell_Type::Dirichlet_left:
+				case Cell_Type::Neumann_left:
+					// Right vertex exists
+					switch (g_waves.cells[c].cell_type.second) {
+						case Cell_Type::Normal:
+						case Cell_Type::Dirichlet_left:
+						case Cell_Type::Neumann_left:
+							// The top vertex exists
+							switch (g_waves.cells[g_waves.adjacency_information[c][1]].cell_type.second) {
+								case Cell_Type::Normal:
+								case Cell_Type::Dirichlet_left:
+								case Cell_Type::Neumann_left:
+									// All vertices exist
+									out_mesh.adjacency_information[c] = { g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] };
+									element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[c][1], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3], g_waves.adjacency_information[c][3] });
+									break;
+								case Cell_Type::Periodic:
+								case Cell_Type::Dirichlet_right:
+								case Cell_Type::Neumann_right:
+									// Top right vertex is missing
+									vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
+									out_mesh.adjacency_information[c] = { g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], vertex_count };
+									element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][3] });
+									++vertex_count;
+									break;
+								default:
+									throw std::runtime_error("Invalid cell type.");
+							}
+							break;
+						case Cell_Type::Periodic:
+						case Cell_Type::Dirichlet_right:
+						case Cell_Type::Neumann_right:
+							// The top vertex is missing
+							vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0]),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
+							switch (g_waves.cells[g_waves.adjacency_information[c][1]].cell_type.second) {
+								case Cell_Type::Normal:
+								case Cell_Type::Dirichlet_left:
+								case Cell_Type::Neumann_left:
+									// Top right vertex exists
+									out_mesh.adjacency_information[c] = { g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] };
+									element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][1], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3], vertex_count });
+									++vertex_count;
+									break;
+								case Cell_Type::Periodic:
+								case Cell_Type::Dirichlet_right:
+								case Cell_Type::Neumann_right:
+									// Top right vertex is missing
+									vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
+									out_mesh.adjacency_information[c] = { g_waves.adjacency_information[c][1], vertex_count, vertex_count + 1 };
+									element_data.insert(element_data.end(), { c, g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][1], vertex_count + 1, vertex_count });
+									vertex_count += 2;
+									break;
+								default:
+									throw std::runtime_error("Invalid cell type.");
+							}
+							break;
+						default:
+							throw std::runtime_error("Invalid cell type.");
+					}
+					break;
+				case Cell_Type::Periodic:
+				case Cell_Type::Dirichlet_right:
+				case Cell_Type::Neumann_right:
+					// Right vertex is missing
+					vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x), static_cast<GLfloat>(g_waves.position_information[c][1]) });
+					switch (g_waves.cells[c].cell_type.second) {
+						case Cell_Type::Normal:
+						case Cell_Type::Dirichlet_left:
+						case Cell_Type::Neumann_left:
+							// Top vertex exists
+							switch (g_waves.cells[g_waves.adjacency_information[c][3]].cell_type.first) {
+								case Cell_Type::Normal:
+								case Cell_Type::Dirichlet_left:
+								case Cell_Type::Neumann_left:
+									// Top right vertex exists
+									out_mesh.adjacency_information[c] = { vertex_count, g_waves.adjacency_information[c][3], g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1] };
+									element_data.insert(element_data.end(), { c, vertex_count, g_waves.adjacency_information[c][3], vertex_count, g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1], g_waves.adjacency_information[c][3] });
+									++vertex_count;
+									break;
+								case Cell_Type::Periodic:
+								case Cell_Type::Dirichlet_right:
+								case Cell_Type::Neumann_right:
+									// Top right vertex is missing
+									vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
+									out_mesh.adjacency_information[c] = { vertex_count, g_waves.adjacency_information[c][3], vertex_count + 1 };
+									element_data.insert(element_data.end(), { c, vertex_count, g_waves.adjacency_information[c][3], vertex_count, vertex_count + 1, g_waves.adjacency_information[c][3] });
+									vertex_count += 2;
+									break;
+								default:
+									throw std::runtime_error("Invalid cell type.");
+							}
+							break;
+						case Cell_Type::Periodic:
+						case Cell_Type::Dirichlet_right:
+						case Cell_Type::Neumann_right:
+							// Top vertex is missing
+							vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0]), static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
+							// And hence, so is the top right vertex
+							vertex_data.emplace_back(surface_vertex{ static_cast<GLfloat>(g_waves.position_information[c][0] + g_waves.step_size_x), static_cast<GLfloat>(g_waves.position_information[c][1] + g_waves.step_size_y) });
+							out_mesh.adjacency_information[c] = { vertex_count, vertex_count + 1, vertex_count + 2 };
+							element_data.insert(element_data.end(), { c, vertex_count, vertex_count + 1, vertex_count, vertex_count + 2, vertex_count + 1 });
+							vertex_count += 3;
+							break;
+						default:
+							throw std::runtime_error("Invalid cell type.");
+					}
+					break;
+				default:
+					throw std::runtime_error("Invalid cell type.");
 			}
 		}
 
@@ -123,12 +186,27 @@ namespace Waves::Mesh {
 	}
 
 	// Update the surface_vertex data based on the updated values of the integrator g_waves.
-	void calculate_surface_vertex(std::vector<surface_vertex>& vertex_data, const std::vector<std::array<unsigned int, 2>>& adjacency_information)
+	void calculate_surface_vertex(std::vector<surface_vertex>& vertex_data, const std::vector<std::array<unsigned int, 3>>& adjacency_information)
 	{
 		// Copy heights
 #pragma omp parallel for
 		for (int c = 0; c < g_waves.cells.size(); ++c)
 			vertex_data[c].position[2] = g_waves.cells[c].U[0];
+
+		// Copy periodic cells
+#pragma omp parallel for
+		for (int c = 0; c < g_waves.cells.size(); ++c) {
+			if (g_waves.cells[c].cell_type.first == Cell_Type::Periodic) {
+				vertex_data[adjacency_information[c][0]].position[2] = vertex_data[g_waves.adjacency_information[c][1]].position[2];
+				assert(g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] != missing_index); // assert that the top right vertex exists
+				vertex_data[adjacency_information[c][2]].position[2] = vertex_data[g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3]].position[2];
+			}
+			if (g_waves.cells[c].cell_type.second == Cell_Type::Periodic) {
+				vertex_data[adjacency_information[c][1]].position[2] = vertex_data[g_waves.adjacency_information[c][3]].position[2];
+				assert(g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1] != missing_index); // assert that the top right vertex exists
+				vertex_data[adjacency_information[c][2]].position[2] = vertex_data[g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1]].position[2];
+			}
+		}
 
 		// Calculate normals
 #pragma omp parallel for
@@ -136,6 +214,19 @@ namespace Waves::Mesh {
 			vec3 u = { vertex_data[adjacency_information[c][0]].position[0] - vertex_data[c].position[0],vertex_data[adjacency_information[c][0]].position[1] - vertex_data[c].position[1], vertex_data[adjacency_information[c][0]].position[2] - vertex_data[c].position[2] };
 			vec3 v = { vertex_data[adjacency_information[c][1]].position[0] - vertex_data[c].position[0],vertex_data[adjacency_information[c][1]].position[1] - vertex_data[c].position[1], vertex_data[adjacency_information[c][1]].position[2] - vertex_data[c].position[2] };
 			std::memcpy(&vertex_data[c].normal[0], glm::value_ptr(glm::normalize(glm::cross(u, v))), 3 * sizeof(GLfloat));
+		}
+
+		// Copy periodic cells
+#pragma omp parallel for
+		for (int c = 0; c < g_waves.cells.size(); ++c) {
+			if (g_waves.cells[c].cell_type.first == Cell_Type::Periodic) {
+				std::memcpy(&vertex_data[adjacency_information[c][0]].normal[0], &vertex_data[g_waves.adjacency_information[c][1]].normal[0], 3 * sizeof(GLfloat));
+				std::memcpy(&vertex_data[adjacency_information[c][2]].normal[0], &vertex_data[g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3]].normal[0], 3 * sizeof(GLfloat));
+			}
+			if (g_waves.cells[c].cell_type.second == Cell_Type::Periodic) {
+				std::memcpy(&vertex_data[adjacency_information[c][1]].normal[0], &vertex_data[g_waves.adjacency_information[c][3]].normal[0], 3 * sizeof(GLfloat));
+				std::memcpy(&vertex_data[adjacency_information[c][2]].normal[0], &vertex_data[g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1]].normal[0], 3 * sizeof(GLfloat));
+			}
 		}
 	}
 

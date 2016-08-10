@@ -34,6 +34,7 @@ namespace Waves {
 		int i;
 		switch (cell.cell_type.first) { // x-direction.
 			case Cell_Type::Normal:
+			case Cell_Type::Periodic:
 			case Cell_Type::Neumann_left:
 				mask.assign(stages_x*stages_y, true);
 				break;
@@ -59,6 +60,7 @@ namespace Waves {
 		}
 		switch (cell.cell_type.second) { // y-direction. Here we only set extra false values.
 			case Cell_Type::Normal:
+			case Cell_Type::Periodic:
 			case Cell_Type::Neumann_left:
 				break;
 			case Cell_Type::Neumann_right:
@@ -149,6 +151,7 @@ namespace Waves {
 			// Apply the appropriate stencils based on the cell type.
 			switch (cells[c].cell_type.first) {
 				case Cell_Type::Normal:
+				case Cell_Type::Periodic:
 					assert((adjacency_information[c][0] != missing_index) && (adjacency_information[c][1] != missing_index));
 					for (auto offset = 0; offset != stages_x*stages_y; offset += stages_x) {
 						auto it_coefs = coefficients_x.begin();
@@ -229,6 +232,7 @@ namespace Waves {
 			// Apply the appropriate stencils based on the cell type.
 			switch (cells[c].cell_type.second) {
 				case Cell_Type::Normal:
+				case Cell_Type::Periodic:
 					assert((adjacency_information[c][2] != missing_index) && (adjacency_information[c][3] != missing_index));
 					for (auto offset = 0; offset != stages_x; ++offset) {
 						auto it_coefs = coefficients_y.begin();
@@ -324,9 +328,9 @@ namespace Waves {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0]; // [-1,1)
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1]; // [-1,1)
 							// u=cos(2*PI*(t+c1*x+c2*y)), which has a wave speed of sqrt(c1^2+c2^2)
-							cells[c].U[j*stages_x + i] = cos(2.0*PI*(2.0*x + y));
-							// set V to be the derivative of U to get a travelling wave train (actually -ve direction)
-							cells[c].V[j*stages_x + i] = -2.0*PI / g_waves.wave_speed / std::sqrt(5.0) * std::sin(2.0*PI*(2.0*x + y));
+							cells[c].U[j*stages_x + i] = cos(2.0*PI*(2.0*x + 1.0*y));
+							// set V to be the derivative of U to get a travelling wave train
+							cells[c].V[j*stages_x + i] = -0.5*PI*PI * std::sin(2.0*PI*(2.0*x + 1.0*y));
 						}
 				}
 				hint = 0.25f;
@@ -416,6 +420,7 @@ namespace Waves {
 		return hint;
 	}
 
+	// Helper function to create adjacency and cell type information for non-periodic domains.
 	void Integrator::Find_Neighbours()
 	{
 		adjacency_information.resize(position_information.size());
@@ -502,13 +507,27 @@ namespace Waves {
 				step_size_y = 0.1;
 				wave_speed = 10.0;
 				domain_scaling_factor = { n*step_size_x,n*step_size_y };
-				for (unsigned int j = 0; j < n; ++j) {
-					for (unsigned int i = 0; i < n; ++i) {
+				for (unsigned int j = 0; j < n - 1; ++j) {
+					for (unsigned int i = 0; i < n - 1; ++i) {
 						cells.emplace_back(std::make_pair(Cell_Type::Normal, Cell_Type::Normal));
-						adjacency_information.emplace_back(std::array<unsigned int, 4>{ n * j + (i + n - 1) % n, n * j + (i + 1) % n, n * ((j + n - 1) % n) + i, n * ((j + 1) % n) + i });
+						adjacency_information.emplace_back(std::array<unsigned int, 4>{ n * j + (i + n - 1) % n, n * j + i + 1, n * ((j + n - 1) % n) + i, n * (j + 1) + i });
 						position_information.emplace_back(std::array<double, 2>{ step_size_x * static_cast<int>(i - n / 2), step_size_y * static_cast<int>(j - n / 2)});
 					}
+					// last column
+					cells.emplace_back(std::make_pair(Cell_Type::Periodic, Cell_Type::Normal));
+					adjacency_information.emplace_back(std::array<unsigned int, 4>{ n * j + n - 2, n * j, n * ((j + n - 1) % n) + n - 1, n * (j + 1) + n - 1 });
+					position_information.emplace_back(std::array<double, 2>{ step_size_x * static_cast<int>(n - 1 - n / 2), step_size_y * static_cast<int>(j - n / 2)});
 				}
+				// last row
+				for (unsigned int i = 0; i < n - 1; ++i) {
+					cells.emplace_back(std::make_pair(Cell_Type::Normal, Cell_Type::Periodic));
+					adjacency_information.emplace_back(std::array<unsigned int, 4>{ n * (n - 1) + (i + n - 1) % n, n * (n - 1) + i + 1, n * (n - 2) + i, i });
+					position_information.emplace_back(std::array<double, 2>{ step_size_x * static_cast<int>(i - n / 2), step_size_y * static_cast<int>(n - 1 - n / 2)});
+				}
+				// last corner
+				cells.emplace_back(std::make_pair(Cell_Type::Periodic, Cell_Type::Periodic));
+				adjacency_information.emplace_back(std::array<unsigned int, 4>{ n * n - 2, n * n - n, n * n - 1 - n, n - 1 });
+				position_information.emplace_back(std::array<double, 2>{ step_size_x * static_cast<int>(n - 1 - n / 2), step_size_y * static_cast<int>(n - 1 - n / 2)});
 				break;
 			}
 			case 1: // Square with Dirichlet boundaries.
