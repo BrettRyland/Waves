@@ -1,4 +1,6 @@
-#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <string>
 #include <GL/glew.h>
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
@@ -7,67 +9,52 @@
 #endif
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <stddef.h>
-#include <math.h>
-#include <stdio.h>
+//#include <stddef.h>
+#include <cmath>
 #include "renderer.h"
 #include "integrator.h"
 
-// Read in the fragment or vertex shader files. (Unmodified from original C code.)
-void* file_contents(const char *filename, GLint *length)
+// Read in the fragment or vertex shader files.
+std::string file_contents(const std::string& filename)
 {
-	FILE *f = fopen(filename, "r");
-	void *buffer;
-
-	if (!f) {
-		fprintf(stderr, "Unable to open %s for reading\n", filename);
-		return NULL;
+	// read entire file into string
+	if (std::ifstream is{ filename, std::ios::ate }) {
+		auto size = is.tellg();
+		std::string str(size, '\0'); // construct string to stream size + 1 for \0
+		is.seekg(0);
+		is.read(&str[0], size);
+		return str;
 	}
-
-	fseek(f, 0, SEEK_END);
-	*length = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	buffer = malloc(*length + 1);
-	*length = fread(buffer, 1, *length, f);
-	fclose(f);
-	((char*)buffer)[*length] = '\0';
-
-	return buffer;
+	else {
+		throw std::runtime_error("Could not open " + filename);
+	}
 }
 
-// Show why the shader program failed to compile or link. (Unmodified from original C code.)
+// Show why the shader program failed to compile or link.
 void show_info_log(GLuint object, PFNGLGETSHADERIVPROC glGet__iv, PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
 	GLint log_length;
-	char *log;
-
 	glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
-	log = (char *)malloc(log_length);
-	glGet__InfoLog(object, log_length, NULL, log);
-	fprintf(stderr, "%s", log);
-	free(log);
+	std::vector<GLchar> log(log_length);
+	glGet__InfoLog(object, log_length, &log_length, &log[0]);
+	std::cerr << log.data();
 }
 
-// Create the shader components. (Unmodified from original C code.)
+// Create the shader components.
 GLuint make_shader(GLenum type, const char *filename)
 {
-	GLint length;
-	GLchar *source = (GLchar*)file_contents(filename, &length);
-	GLuint shader;
-	GLint shader_ok;
+	auto source = file_contents(filename);
+	const GLint length = source.size();
+	auto raw_source = static_cast<const GLchar *>(source.data());
 
-	if (!source)
-		return 0;
-
-	shader = glCreateShader(type);
-	glShaderSource(shader, 1, (const GLchar**)&source, &length);
-	free(source);
+	GLuint shader = glCreateShader(type);
+	glShaderSource(shader, 1, &raw_source, &length);
 	glCompileShader(shader);
 
+	GLint shader_ok = 0;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &shader_ok);
 	if (!shader_ok) {
-		fprintf(stderr, "Failed to compile %s:\n", filename);
+		std::cerr << "Failed to compile " << filename << '\n';
 		show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
 		glDeleteShader(shader);
 		return 0;
@@ -75,7 +62,7 @@ GLuint make_shader(GLenum type, const char *filename)
 	return shader;
 }
 
-// Link the vertex and fragment shader components together to create the shader program. (Unmodified from original C code.)
+// Link the vertex and fragment shader components together to create the shader program.
 GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
 {
 	GLint program_ok;
@@ -88,7 +75,7 @@ GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
 
 	glGetProgramiv(program, GL_LINK_STATUS, &program_ok);
 	if (!program_ok) {
-		fprintf(stderr, "Failed to link shader program:\n");
+		std::cerr << "Failed to link shader program:\n";
 		show_info_log(program, glGetProgramiv, glGetProgramInfoLog);
 		glDeleteProgram(program);
 		return 0;
@@ -310,6 +297,11 @@ namespace Waves::Renderer {
 				g_resources.mv_matrix = g_resources.mv_base_matrix * g_resources.rotation_matrix * g_resources.scale_matrix;
 				break;
 			}
+			case 'r': // Reverse time
+			case 'R':
+				g_waves.step_size_time = -g_waves.step_size_time;
+				g_resources.pause = true;
+				break;
 			case 'b': // Change boundary conditions
 			case 'B':
 			{

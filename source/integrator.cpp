@@ -500,7 +500,7 @@ namespace Waves {
 				position_information.clear();
 				step_size_x = 0.1;
 				step_size_y = 0.1;
-				wave_speed = 1.0;
+				wave_speed = 10.0;
 				domain_scaling_factor = { n*step_size_x,n*step_size_y };
 				for (unsigned int j = 0; j < n; ++j) {
 					for (unsigned int i = 0; i < n; ++i) {
@@ -524,7 +524,7 @@ namespace Waves {
 				position_information.clear();
 				step_size_x = 0.1;
 				step_size_y = 0.1;
-				wave_speed = 1.0;
+				wave_speed = 10.0;
 				domain_scaling_factor = { n*step_size_x,n*step_size_y };
 				for (auto j = 0; j < n; ++j)
 					for (auto i = 0; i < n; ++i)
@@ -545,7 +545,7 @@ namespace Waves {
 				unsigned int n = 200;
 				step_size_x = 0.1;
 				step_size_y = 0.1;
-				wave_speed = 1.0;
+				wave_speed = 10.0;
 				domain_scaling_factor = { n*step_size_x,n*step_size_y };
 				double r = 0.49*domain_scaling_factor[0];
 				for (unsigned int j = 0; j < n; ++j) {
@@ -573,7 +573,7 @@ namespace Waves {
 				unsigned int n = 300;
 				step_size_x = 0.1;
 				step_size_y = 0.1;
-				wave_speed = 1.0;
+				wave_speed = 10.0;
 				domain_scaling_factor = { n*step_size_x,n*step_size_y };
 				double r = 0.5*domain_scaling_factor[0], r2 = 0.5*r, s = std::sqrt(0.5)*0.5*r;
 				for (unsigned int j = 0; j < n; ++j) {
@@ -595,7 +595,7 @@ namespace Waves {
 				unsigned int n = 300;
 				step_size_x = 0.1;
 				step_size_y = 0.1;
-				wave_speed = 1.0;
+				wave_speed = 10.0;
 				domain_scaling_factor = { n*step_size_x,n*step_size_y };
 				double r = 0.26*domain_scaling_factor[0], s = std::sqrt(0.5)*0.25*domain_scaling_factor[0];
 				for (unsigned int j = 0; j < n; ++j) {

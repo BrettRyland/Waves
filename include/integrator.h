@@ -30,7 +30,6 @@ namespace Waves {
 	{ // Functions and variables related to the PDE and integrator.
 	private:
 		unsigned int stages_x, stages_y; // Number of stages per cell.
-		double step_size_time;
 		double wave_speed;
 		int initial_conditions;
 		int boundary_conditions;
@@ -63,6 +62,7 @@ namespace Waves {
 		std::vector<std::array<unsigned int, 4>> adjacency_information; // std::numeric_limits<unsigned int>::max() indicates no adjacent cell (i.e. for boundary cells)
 		std::vector<std::array<double, 2>> position_information;
 		double Time = 0.0; // Time the system has evolved for.
+		double step_size_time;
 		double step_size_x;
 		double step_size_y;
 		void Step(); // Step forwards in time, i.e., the integrator.

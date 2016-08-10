@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	} catch (const std::exception& e) {
-		std::cout << e.what() << ", aborting." << std::endl;
+		std::cerr << e.what() << ", aborting." << std::endl;
 		return 1;
 	} catch(...) {
 		throw std::runtime_error("Unable to parse input arguments.");
@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 	std::cout << "Press 'i' to change initial conditions.\n";
 	std::cout << "Press 'b' to change boundary conditions.\n";
 	std::cout << "Press <space> to toggle pause state.\n";
+	std::cout << "Press 'r' to reverse time.\n";
 	std::cout << "Press 'z' to null out the velocities to create a 'time-mirror' effect.\n";
 	std::cout << "Press <Esc> or 'q' to quit.\n";
 
