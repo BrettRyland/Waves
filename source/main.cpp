@@ -60,12 +60,11 @@ int main(int argc, char *argv[])
 					throw std::runtime_error("Unknown flag " + var);
 			}
 		}
-	}
-	catch (const std::exception& e)
-	{
+	} catch (const std::exception& e) {
 		std::cout << e.what() << ", aborting." << std::endl;
 		return 1;
-		//throw std::runtime_error("Unable to parse input arguments.");
+	} catch(...) {
+		throw std::runtime_error("Unable to parse input arguments.");
 	}
 
 	float hint = Waves::g_waves.Initialise(rx, ry, dt, IC, BC);
