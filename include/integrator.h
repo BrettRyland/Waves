@@ -13,7 +13,7 @@ namespace Waves {
 		Neumann_left    = Main node uses phantom points on the left in computations, other nodes are normal.
 		Neumann_right   = Main node uses phantom points on the right in computations, other nodes are outside the domain.
 	*/
-	enum class Cell_Type { Normal, Inactive, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right };
+	enum class Cell_Type { Normal, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right };
 	// The basic cell within the domain resulting from applying Lobatto IIIA-IIIB discretisation in space (x,y).
 	// Each cell has stages_x * stages_y nodes.
 	class Cell
@@ -21,6 +21,7 @@ namespace Waves {
 	public:
 		std::pair<Cell_Type, Cell_Type> cell_type; // boundary condition types in x (first) and y (second) directions
 		std::vector<double> U, V, U_xx, U_yy;
+		Cell() = default;
 		Cell(std::pair<Cell_Type, Cell_Type> type) : cell_type(type) {};
 	};
 
@@ -29,8 +30,6 @@ namespace Waves {
 	{ // Functions and variables related to the PDE and integrator.
 	private:
 		unsigned int stages_x, stages_y; // Number of stages per cell.
-		double step_size_x;
-		double step_size_y;
 		double step_size_time;
 		double wave_speed;
 		int initial_conditions;
@@ -45,8 +44,8 @@ namespace Waves {
 		std::vector<double> Setup_Coords(int r);
 
 		// Compute second-order spatial derivatives of U.
-		inline void Compute_U_xx(Waves::Cell& cell, const Waves::Cell& x_left, const Waves::Cell& x_right);
-		inline void Compute_U_yy(Waves::Cell& cell, const Waves::Cell& y_left, const Waves::Cell& y_right);
+		void Compute_U_xx();
+		void Compute_U_yy();
 
 		// Components of the integrator.
 		void Step_U(double step_size);
@@ -54,15 +53,22 @@ namespace Waves {
 		void update_U_dependent_variables();
 		void update_V_dependent_variables();
 
+		// Helper function for constructing boundary conditions
+		std::array<double,2> domain_scaling_factor;
+		void Find_Neighbours();
+
 	public:
 		std::vector<Waves::Cell> cells; // Variables in the PDE (including derivatives and other useful values) for each cell.
 		// We keep the following information arrays separate from the cells to minimise the memory footprint of the cells.
-		std::vector<std::array<long, 4>> adjacency_information; // -1 indicates no adjacent cell (i.e. for boundary cells)
+		std::vector<std::array<unsigned int, 4>> adjacency_information; // std::numeric_limits<unsigned int>::max() indicates no adjacent cell (i.e. for boundary cells)
 		std::vector<std::array<double, 2>> position_information;
 		double Time = 0.0; // Time the system has evolved for.
+		double step_size_x;
+		double step_size_y;
 		void Step(); // Step forwards in time, i.e., the integrator.
+		void Half_Step() { Step_V(0.5*step_size_time); }; // Perform an initial half-step in V to optimise the leapfrog algorithm.
 		float Change_Initial_Conditions(int ic = -1); // Defaults to switching to the next initial condition.
-		void Change_Boundary_Conditions(int bc = -1); // Defaults to switching to the next initial condition.
+		float Change_Boundary_Conditions(int bc = -1); // Defaults to switching to the next initial condition. Also resets the initial conditions and returns the initial conditions hint.
 
 		// Initialise the Integrator.
 		float Initialise(int rx, int ry, double dt, int ic, int bc);
@@ -74,7 +80,6 @@ namespace Waves {
 	// We need to use a single global instance of this class for OpenGL to have access to it. We declare it extern here and construct it in integrator.cpp.
 	extern Integrator g_waves;
 
-	// ostream operator for describing the Integator.
-	std::ostream& operator<< (std::ostream& os, const Integrator& integrator);
-
+	//// ostream operator for describing the Integator.
+	//std::ostream& operator<< (std::ostream& os, const Integrator& integrator);
 }
