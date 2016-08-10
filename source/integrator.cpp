@@ -293,6 +293,7 @@ namespace Waves {
 	}
 
 	// Switch to a new set of initial conditions.
+	// TODO: allow reading of initial conditions from a file
 	float Integrator::Change_Initial_Conditions(int ic)
 	{ // Change the initial conditions
 		float hint = 1.0f; // Hint for the z-scaling factor in the renderer.
@@ -476,7 +477,8 @@ namespace Waves {
 		}
 	}
 
-	// Switch to a new set of boundary conditions. (FIXME: Only the first two have been implemented so far.)
+	// Switch to a new set of boundary conditions.
+	// TODO: allow reading of boundary conditions from a file
 	float Integrator::Change_Boundary_Conditions(int bc)
 	{ // Change the boundary conditons
 		if (bc == -1)
@@ -700,7 +702,7 @@ namespace Waves {
 
 	std::ostream & operator<<(std::ostream & os, const Integrator & integrator)
 	{
-		os << "dx=" << integrator.step_size_x << ", dy=" << integrator.step_size_y << ", " << integrator.stages_x << " stages in x, " << integrator.stages_y << " stages in y, and time step " << integrator.step_size_time << ".";
+		os << "A " << integrator.cells.size() << " element simulation using Lobatto IIIA-IIIB discretisation in space with " << integrator.stages_x + 1 << " stages in x, " << integrator.stages_y + 1 << " stages in y, and stepsizes " << "dx=" << integrator.step_size_x << ", dy=" << integrator.step_size_y << " and dt=" << integrator.step_size_time << ".";
 		return os;
 	}
 }

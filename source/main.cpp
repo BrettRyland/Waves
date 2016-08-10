@@ -49,9 +49,9 @@ int main(int argc, char *argv[])
 					std::cout << "Usage example: Wave rx=2 ry=2 dt=1e-3 IC=1 BC=1 -fs\n";
 					std::cout << "rx = number of stages in x (default: 2)\n";
 					std::cout << "ry = number of stages in y (default: 2)\n";
-					std::cout << "dt = time stepsize (default: 0.001)\n";
-					std::cout << "IC = initial conditions [0 = single frequency, 1 = continuous spectrum, 2 = continuous spectrum with one hump, 3 = continuous spectrum with two humps] (default: 1)\n";
-					std::cout << "BC = boundary conditions [0 = Periodic square, 1 = Dirichlet on a square, 2 = Dirichlet on a circle, 3 = Dirichlet on a circle with a cusp, 4 = Dirichlet on a double cusp (i.e., intersecting circles)] (default: 1)\n";
+					std::cout << "dt = time stepsize (default: 0.01667)\n";
+					std::cout << "IC = initial conditions [0 = single frequency, 1 = continuous spectrum, 2 = continuous spectrum with one hump, 3 = continuous spectrum with two humps, 4 = as 2 but off-centre]\n";
+					std::cout << "BC = boundary conditions [0 = Periodic square, 1 = Dirichlet on a square, 2 = Dirichlet on a circle, 3 = Dirichlet on a circle with a cusp, 4 = Dirichlet on a double cusp (i.e., intersecting circles)]\n";
 					std::cout << "-fs = fullscreen flag (not included by default)";
 					std::cout << std::endl;
 					return 0;
@@ -61,9 +61,11 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	catch (...)
+	catch (const std::exception& e)
 	{
-		throw std::runtime_error("Unable to parse input arguments.");
+		std::cout << e.what() << ", aborting." << std::endl;
+		return 1;
+		//throw std::runtime_error("Unable to parse input arguments.");
 	}
 
 	float hint = Waves::g_waves.Initialise(rx, ry, dt, IC, BC);
@@ -72,6 +74,7 @@ int main(int argc, char *argv[])
 	std::cout << "Press 'i' to change initial conditions.\n";
 	std::cout << "Press 'b' to change boundary conditions.\n";
 	std::cout << "Press <space> to toggle pause state.\n";
+	std::cout << "Press 'z' to null out the velocities to create a 'time-mirror' effect.\n";
 	std::cout << "Press <Esc> or 'q' to quit.\n";
 
 	// Standard glut initialisation and binding of callback functions.
