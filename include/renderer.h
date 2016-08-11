@@ -32,7 +32,7 @@ namespace Waves::Renderer {
 
 		// Projection and modelview matrices.
 		glm::mat4 p_matrix, mv_matrix, mv_base_matrix, rotation_matrix{ 1.0f }, scale_matrix{ 1.0f };
-		glm::vec3 eye{ 0.0f, -4.0f, 4.0f }, centre{ 0.0f, 0.0f, 0.0f }, up{ 0.0f, 0.0f, 1.0f };
+		glm::vec3 eye{ 0.0f, -6.0f, 6.0f }, centre{ 0.0f, 0.0f, 0.0f }, up{ 0.0f, 0.0f, 1.0f };
 
 		int Window_ID;
 		GLsizei window_size[2]{ 1200, 800 };

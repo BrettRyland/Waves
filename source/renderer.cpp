@@ -14,6 +14,10 @@
 #include "renderer.h"
 #include "integrator.h"
 
+#ifndef GLM_FORCE_RADIANS
+#define GLM_FORCE_RADIANS
+#endif // !GLM_FORCE_RADIANS
+
 // Read in the fragment or vertex shader files.
 std::string file_contents(const std::string& filename)
 {
@@ -196,7 +200,7 @@ namespace Waves::Renderer {
 		make_surface_program(vertex_shader, fragment_shader, program);
 		enact_surface_program(vertex_shader, fragment_shader, program);
 
-		g_resources.p_matrix = glm::perspective(45.0f, static_cast<GLfloat>(g_resources.window_size[0]) / static_cast<GLfloat>(g_resources.window_size[1]), 0.0625f, 256.0f);
+		g_resources.p_matrix = glm::perspective(1.0f, static_cast<GLfloat>(g_resources.window_size[0]) / static_cast<GLfloat>(g_resources.window_size[1]), 0.0625f, 256.0f);
 		g_resources.mv_base_matrix = glm::lookAt(g_resources.eye, g_resources.centre, g_resources.up);
 		g_resources.scale_matrix = rescale(hint);
 		g_resources.mv_matrix = g_resources.mv_base_matrix * g_resources.rotation_matrix * g_resources.scale_matrix;
@@ -300,7 +304,8 @@ namespace Waves::Renderer {
 			case 'r': // Reverse time
 			case 'R':
 				g_waves.step_size_time = -g_waves.step_size_time;
-				g_resources.pause = true;
+				g_waves.Half_Step(); // Take 2 half-steps to set up the integrator for gonig backwards
+				g_waves.Half_Step();
 				break;
 			case 'b': // Change boundary conditions
 			case 'B':
@@ -332,7 +337,7 @@ namespace Waves::Renderer {
 	{
 		g_resources.window_size[0] = w;
 		g_resources.window_size[1] = h;
-		g_resources.p_matrix = glm::perspective(90.0f, static_cast<GLfloat>(w) / static_cast<GLfloat>(h), 0.0625f, 256.0f);
+		g_resources.p_matrix = glm::perspective(1.0f, static_cast<GLfloat>(g_resources.window_size[0]) / static_cast<GLfloat>(g_resources.window_size[1]), 0.0625f, 256.0f);
 		glViewport(0, 0, w, h);
 	}
 

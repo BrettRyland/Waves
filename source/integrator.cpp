@@ -633,6 +633,9 @@ namespace Waves {
 		}
 		// minimise meory usage
 		cells.shrink_to_fit();
+
+		// Report on new setup
+		std::cout << g_waves << std::endl;
 		return Change_Initial_Conditions(initial_conditions);
 	}
 
