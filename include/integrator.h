@@ -80,6 +80,4 @@ namespace Waves {
 	// We need to use a single global instance of this class for OpenGL to have access to it. We declare it extern here and construct it in integrator.cpp.
 	extern Integrator g_waves;
 
-	//// ostream operator for describing the Integator.
-	//std::ostream& operator<< (std::ostream& os, const Integrator& integrator);
 }

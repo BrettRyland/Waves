@@ -45,7 +45,7 @@ namespace Waves::Renderer {
 	extern OpenGL_Resources g_resources;
 
 	// Initialise g_resources.
-	void make_resources(float hint);
+	void make_resources(float hint = 1.0f);
 
 	// Set some OpenGL condtions.
 	void init_gl_state();

@@ -53,8 +53,6 @@ namespace Waves::Mesh {
 		std::vector<GLuint> element_data;
 		element_data.reserve(6 * g_waves.cells.size());
 		out_mesh.adjacency_information.resize(vertex_count);
-		int s, t, i;
-		GLuint index;
 		GLfloat scale{ 5.0f };
 
 		// Assign the components of the position, normal, shininess and specular values, adding in extra vertices as necessary.

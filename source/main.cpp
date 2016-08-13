@@ -68,7 +68,6 @@ int main(int argc, char *argv[])
 	}
 
 	float hint = Waves::g_waves.Initialise(rx, ry, dt, IC, BC);
-	std::cout << Waves::g_waves << '\n';
 	std::cout << "Use the mouse to look around.\n";
 	std::cout << "Press 'i' to change initial conditions.\n";
 	std::cout << "Press 'b' to change boundary conditions.\n";
