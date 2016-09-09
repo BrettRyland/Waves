@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/QtWaves">
+        <file>shaders/simple.frag.glsl</file>
+        <file>shaders/simple.vert.glsl</file>
+    </qresource>
+</RCC>

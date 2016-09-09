@@ -2,8 +2,8 @@
 #include <algorithm> // for std::max
 #include <numeric> // for std::inner_product
 #include <limits> // for std::numeric_limits::max()
+#include <cassert> // for assert()
 #include "integrator.h"
-#include "renderer.h"
 
 namespace Waves {
 	// Our global instance of the Integrator. This needs to be global for OpenGL to access it.
@@ -28,7 +28,7 @@ namespace Waves {
 	}
 
 	// Generate a true/false mask for a given cell for determining which nodes in the cell need updating.
-	void Generate_Update_Mask(std::vector<bool> & mask, const Cell & cell, unsigned int stages_x, unsigned int stages_y)
+	void Generate_Update_Mask(std::vector<bool>&  mask, const Cell&  cell, unsigned int stages_x, unsigned int stages_y)
 	{
 		auto it = mask.begin();
 		int i;
@@ -216,14 +216,14 @@ namespace Waves {
 		};
 
 		// Function to apply the first coefficient stencil to the local cell centred on the main node (includes all values in cell to the left and first value in cell to right).
-		auto main_node_yy = [this, &inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_left, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
+		auto main_node_yy = [this,& inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_left, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 			return inner_product_n(it_U_left, it_coefs, stages_y, stages_x,
 				inner_product_n(it_U, it_coefs + stages_y, stages_y, stages_x, // *it_coefs has size 2*stages_x+1, so this selects the middle value
 					*it_U_right * *(it_coefs + 2 * stages_y))) / step_size_y / step_size_y;
 		};
 
 		// Function to apply the remaining coefficient stencils to the local cell (includes first value in cell to the right).
-		auto internal_node_yy = [this, &inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
+		auto internal_node_yy = [this,& inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 			return inner_product_n(it_U, it_coefs, stages_y, stages_x, *it_U_right * *(it_coefs + stages_y)) / step_size_y / step_size_y; // *it_coefs has size stages_x+1, so this selects the last value
 		};
 
@@ -722,7 +722,7 @@ namespace Waves {
 		return coords;
 	}
 
-	std::ostream & operator<<(std::ostream & os, const Integrator & integrator)
+	std::ostream&  operator<<(std::ostream&  os, const Integrator&  integrator)
 	{
 		os << "A " << integrator.cells.size() << " element simulation using Lobatto IIIA-IIIB discretisation in space with " << integrator.stages_x + 1 << " stages in x, " << integrator.stages_y + 1 << " stages in y, and stepsizes " << "dx=" << integrator.step_size_x << ", dy=" << integrator.step_size_y << " and dt=" << integrator.step_size_time << ".";
 		return os;
