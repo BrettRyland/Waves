@@ -3,6 +3,7 @@
 #include <numeric> // for std::inner_product
 #include <limits> // for std::numeric_limits::max()
 #include <cassert> // for assert()
+
 #include "integrator.h"
 
 namespace Waves {
