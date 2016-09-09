@@ -1,10 +1,13 @@
 #include <cassert>
+#include <limits>
+
 #include <QVector3D>
 
 #include "mesh.h"
 #include "integrator.h"
 
 namespace Waves {
+	const unsigned int missing_index = std::numeric_limits<unsigned int>::max();
 
 	// Generate a surface mesh.
 	void Mesh::init_surface_mesh()
