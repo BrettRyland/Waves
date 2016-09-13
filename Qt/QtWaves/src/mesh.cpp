@@ -1,5 +1,8 @@
 #include <cassert>
 #include <limits>
+//#include <algorithm>
+//#include <execution>
+//#include <boost/iterator/zip_iterator.hpp>
 
 #include <QVector3D>
 
@@ -150,9 +153,16 @@ namespace Waves {
 		for (int c = 0; c < g_waves.cells.size(); ++c)
 			vertices[c].position[2] = g_waves.cells[c].U[0];
 
+		//std::for_each(
+		//	boost::make_zip_iterator(boost::make_tuple(vertices.begin(), g_waves.cells.begin())),
+		//	boost::make_zip_iterator(boost::make_tuple(vertices.end(), g_waves.cells.end())),
+		//	[](boost::tuple<std::vector<Waves::Vertex>::iterator, std::vector<Waves::Cell>::iterator> zip_it) { (*(zip_it.get<0>())).position[2] = (*(zip_it.get<1>())).U[0]; }
+		//);
+
 		// Copy periodic cells
 #pragma omp parallel for
 		for (int c = 0; c < g_waves.cells.size(); ++c) {
+		//std::for_each(boost::make_zip_iterator(boost::make_tuple()),, []() {
 			if (g_waves.cells[c].cell_type.first == Cell_Type::Periodic) {
 				vertices[adjacency_information[c][0]].position[2] = vertices[g_waves.adjacency_information[c][1]].position[2];
 				assert(g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] != missing_index); // assert that the top right vertex exists
@@ -163,6 +173,7 @@ namespace Waves {
 				assert(g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1] != missing_index); // assert that the top right vertex exists
 				vertices[adjacency_information[c][2]].position[2] = vertices[g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1]].position[2];
 			}
+		//});
 		}
 
 		// Calculate normals
