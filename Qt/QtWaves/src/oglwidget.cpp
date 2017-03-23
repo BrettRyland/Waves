@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include <QKeyEvent>
 #include <QThread>
 
@@ -305,7 +307,7 @@ namespace Waves {
 	{ // Note: we must signal to the integrator_wrapper thread before modifying the integrator
 		emit modify_integrator();
 		g_waves.Time = 0.0;
-		float hint = g_waves.Change_Initial_Conditions();
+        g_waves.Change_Initial_Conditions();
 		// Update the surface mesh and display it.
 		mesh.update_surface_mesh();
 		update_vertex_buffer();
@@ -317,7 +319,7 @@ namespace Waves {
 	{ // Note: we must signal to the integrator_wrapper thread before modifying the integrator
 		emit modify_integrator();
 		g_waves.Time = 0.0;
-		float hint = g_waves.Change_Boundary_Conditions();
+        g_waves.Change_Boundary_Conditions();
 		// Rebuild the surface mesh and display it.
 		mesh.init_surface_mesh();
 		rebuild_vertex_array_object();

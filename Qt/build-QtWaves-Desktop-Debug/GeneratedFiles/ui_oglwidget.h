@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'oglwidget.ui'
 **
-** Created by: Qt User Interface Compiler version 5.7.0
+** Created by: Qt User Interface Compiler version 5.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -36,7 +36,7 @@ public:
 
     void retranslateUi(QOpenGLWidget *OGLWidget)
     {
-        OGLWidget->setWindowTitle(QApplication::translate("OGLWidget", "OGLWidget", 0));
+        OGLWidget->setWindowTitle(QApplication::translate("OGLWidget", "OGLWidget", Q_NULLPTR));
     } // retranslateUi
 
 };

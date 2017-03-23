@@ -15,7 +15,7 @@ namespace Waves {
 
 	public:
 		// A modifiable Mesh object is required in the constructor so that we can update it.
-		Integrator_Wrapper(Mesh &mesh, QObject *parent = Q_NULLPTR);
+        Integrator_Wrapper(Mesh &mesh);
 		~Integrator_Wrapper();
 		inline bool is_paused() { return m_paused; }
 

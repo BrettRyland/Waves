@@ -4,18 +4,18 @@
 
 TEMPLATE = app
 TARGET = QtWaves
-DESTDIR = ../../Win32/Release
+DESTDIR = ./release
 QT += core widgets gui
 CONFIG += release console
 DEFINES += QT_DLL QT_WIDGETS_LIB
-INCLUDEPATH += ./GeneratedFiles \
-    . \
-    ./GeneratedFiles/Release \
-    $(ProjectDir)/include \
-    $(ProjectDir)/../../include
+INCLUDEPATH += $$PWD/include $$PWD/../../include
 DEPENDPATH += .
 MOC_DIR += ./GeneratedFiles/release
 OBJECTS_DIR += release
 UI_DIR += ./GeneratedFiles
 RCC_DIR += ./GeneratedFiles
+QMAKE_CXXFLAGS += -fopenmp
+QMAKE_LFLAGS +=  -fopenmp
+QMAKE_CFLAGS_RELEASE += -fopenmp
+QMAKE_CFLAGS_DEBUG += -fopenmp
 include(QtWaves.pri)

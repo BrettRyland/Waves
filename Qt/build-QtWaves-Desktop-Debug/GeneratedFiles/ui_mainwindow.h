@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.7.0
+** Created by: Qt User Interface Compiler version 5.7.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -123,13 +123,13 @@ public:
 
     void retranslateUi(QMainWindow *Waves__mainwindowClass)
     {
-        Waves__mainwindowClass->setWindowTitle(QApplication::translate("Waves::mainwindowClass", "QtGL", 0));
-        ICButton->setText(QApplication::translate("Waves::mainwindowClass", "Initial Condition", 0));
-        BCButton->setText(QApplication::translate("Waves::mainwindowClass", "Boundary Condition", 0));
-        pauseButton->setText(QApplication::translate("Waves::mainwindowClass", "Pause", 0));
-        fullscreenButton->setText(QApplication::translate("Waves::mainwindowClass", "Fullscreen", 0));
-        resetviewButton->setText(QApplication::translate("Waves::mainwindowClass", "Reset view", 0));
-        quitButton->setText(QApplication::translate("Waves::mainwindowClass", "Quit", 0));
+        Waves__mainwindowClass->setWindowTitle(QApplication::translate("Waves::mainwindowClass", "QtGL", Q_NULLPTR));
+        ICButton->setText(QApplication::translate("Waves::mainwindowClass", "Initial Condition", Q_NULLPTR));
+        BCButton->setText(QApplication::translate("Waves::mainwindowClass", "Boundary Condition", Q_NULLPTR));
+        pauseButton->setText(QApplication::translate("Waves::mainwindowClass", "Pause", Q_NULLPTR));
+        fullscreenButton->setText(QApplication::translate("Waves::mainwindowClass", "Fullscreen", Q_NULLPTR));
+        resetviewButton->setText(QApplication::translate("Waves::mainwindowClass", "Reset view", Q_NULLPTR));
+        quitButton->setText(QApplication::translate("Waves::mainwindowClass", "Quit", Q_NULLPTR));
     } // retranslateUi
 
 };

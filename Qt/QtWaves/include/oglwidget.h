@@ -60,7 +60,7 @@ namespace Waves {
 	private:
 		// *** Integrator information *** //
 		Waves::Mesh mesh; // The mesh for rendering
-		Integrator_Wrapper integrator_wrapper{ mesh, this }; // A wrapper around the integrator to allow it to run in its own thread
+        Integrator_Wrapper integrator_wrapper{ mesh }; // A wrapper around the integrator to allow it to run in its own thread
 		void run_integrator(); // Actually set the integrator running in its thread
 
 		// *** OpenGL State Information *** //
