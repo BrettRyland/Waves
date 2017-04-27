@@ -1,17 +1,15 @@
+///@file
+
 #include <cmath> // for std::sin(), std::cos()
 #include <algorithm> // for std::max
 #include <numeric> // for std::inner_product
 #include <limits> // for std::numeric_limits::max()
 #include <cassert> // for assert()
-
 #include "integrator.h"
 
 namespace Waves {
-	// Our global instance of the Integrator. This needs to be global for OpenGL to access it.
+	/// Our global instance of the Integrator. This needs to be global for OpenGL to access it.
 	Integrator g_waves;
-
-	const double PI = 3.141592653589793;
-	const unsigned int missing_index = std::numeric_limits<unsigned int>::max();
 
 	// Initialise the Integrator.
 	// We return a hint for the z-scaling factor for use later in the renderer.
@@ -28,7 +26,12 @@ namespace Waves {
 		return Change_Boundary_Conditions(boundary_conditions); // Sets the initial conditions too.
 	}
 
-	// Generate a true/false mask for a given cell for determining which nodes in the cell need updating.
+	/** Generate a true/false mask for a given cell for determining which nodes in the cell need updating.
+	\param[out] mask is the mask
+	\param[in] cell is the cell to examine
+	\param[in] stages_x is the number of stages in the x direction
+	\param[in] stages_y is the number of stages in the y direction
+	*/
 	void Generate_Update_Mask(std::vector<bool>&  mask, const Cell&  cell, unsigned int stages_x, unsigned int stages_y)
 	{
 		auto it = mask.begin();
@@ -85,7 +88,7 @@ namespace Waves {
 	{
 		auto derivative_of_the_potential = [](double i) {return 2 * i + 4 * i*i*i; }; // V'(u)=2*u+4*u^3
 #pragma omp parallel for
-        for (unsigned int c = 0; c < cells.size(); ++c) {
+		for (auto c = 0; c < cells.size(); ++c) {
 			std::vector<bool> mask(stages_x*stages_y, true);
 			//for (auto& cell : cells) {
 			Generate_Update_Mask(mask, cells[c], stages_x, stages_y);
@@ -105,7 +108,7 @@ namespace Waves {
 	void Integrator::Step_U(double step_size)
 	{
 #pragma omp parallel for
-        for (unsigned int c = 0; c < cells.size(); ++c) {
+		for (auto c = 0; c < cells.size(); ++c) {
 			std::vector<bool> mask(stages_x*stages_y, true);
 			//for (auto& cell : cells) {
 			Generate_Update_Mask(mask, cells[c], stages_x, stages_y);
@@ -148,13 +151,13 @@ namespace Waves {
 		};
 
 		//#pragma omp parallel for
-        for (unsigned int c = 0; c < cells.size(); ++c) {
+		for (int c = 0; c < cells.size(); ++c) {
 			// Apply the appropriate stencils based on the cell type.
 			switch (cells[c].cell_type.first) {
 				case Cell_Type::Normal:
 				case Cell_Type::Periodic:
 					assert((adjacency_information[c][0] != missing_index) && (adjacency_information[c][1] != missing_index));
-                    for (unsigned int offset = 0; offset != stages_x*stages_y; offset += stages_x) {
+					for (auto offset = 0; offset != stages_x*stages_y; offset += stages_x) {
 						auto it_coefs = coefficients_x.begin();
 						cells[c].U_xx[offset] = main_node_xx(cells[c].U.begin() + offset, cells[adjacency_information[c][0]].U.begin() + offset, cells[adjacency_information[c][1]].U.begin() + offset, (*it_coefs).begin());
 						for (++it_coefs; it_coefs != coefficients_x.end(); ++it_coefs) {
@@ -167,7 +170,7 @@ namespace Waves {
 					// We need all nodes, but we have to use phantom points in the left cell for the main node.
 					throw "Function not implemented yet.";
 					assert(adjacency_information[c][1] != missing_index);
-                    for (unsigned int offset = 0; offset != stages_x*stages_y; offset += stages_x) {
+					for (auto offset = 0; offset != stages_x*stages_y; offset += stages_x) {
 						auto it_coefs = coefficients_x.begin();
 						//main_node_xx((*it).U_xx.begin() + offset, (*it).U.begin() + offset, (*x_left).U.begin() + offset, (*x_right).U.begin() + offset, (*it_coefs).begin());
 						for (++it_coefs; it_coefs != coefficients_x.end(); ++it_coefs) {
@@ -188,7 +191,7 @@ namespace Waves {
 				case Cell_Type::Dirichlet_left:
 					// We only need the internal nodes.
 					assert(adjacency_information[c][1] != missing_index);
-                    for (unsigned int offset = 0; offset != stages_x*stages_y; offset += stages_x) {
+					for (auto offset = 0; offset != stages_x*stages_y; offset += stages_x) {
 						auto it_coefs = coefficients_x.begin() + 1;
 						for (; it_coefs != coefficients_x.end(); ++it_coefs) {
 							auto offset2 = offset + std::distance(coefficients_x.begin(), it_coefs);
@@ -229,13 +232,13 @@ namespace Waves {
 		};
 
 		//#pragma omp parallel for
-        for (unsigned int c = 0; c < cells.size(); ++c) {
+		for (int c = 0; c < cells.size(); ++c) {
 			// Apply the appropriate stencils based on the cell type.
 			switch (cells[c].cell_type.second) {
 				case Cell_Type::Normal:
 				case Cell_Type::Periodic:
 					assert((adjacency_information[c][2] != missing_index) && (adjacency_information[c][3] != missing_index));
-                    for (unsigned int offset = 0; offset != stages_x; ++offset) {
+					for (auto offset = 0; offset != stages_x; ++offset) {
 						auto it_coefs = coefficients_y.begin();
 						cells[c].U_yy[offset] = main_node_yy(cells[c].U.begin() + offset, cells[adjacency_information[c][2]].U.begin() + offset, cells[adjacency_information[c][3]].U.begin() + offset, (*it_coefs).begin());
 						for (++it_coefs; it_coefs != coefficients_y.end(); ++it_coefs) {
@@ -248,7 +251,7 @@ namespace Waves {
 					// We need all nodes, but we have to use phantom points in the left cell for the main node.
 					throw "Function not implemented yet.";
 					assert(adjacency_information[c][3] != missing_index);
-                    for (unsigned int offset = 0; offset != stages_x; ++offset) {
+					for (auto offset = 0; offset != stages_x; ++offset) {
 						auto it_coefs = coefficients_y.begin();
 						//main_node_xx((*it).U_yy.begin() + offset, (*it).U.begin() + offset, (*y_left).U.begin() + offset, (*y_right).U.begin() + offset, (*it_coefs).begin());
 						for (++it_coefs; it_coefs != coefficients_y.end(); ++it_coefs) {
@@ -261,7 +264,7 @@ namespace Waves {
 					// We only need the main nodes, but we have to use phantom points in the current cell.
 					throw "Function not implemented yet.";
 					for (std::iterator_traits<std::vector<double>::iterator>::difference_type offset = 0; offset != stages_x; ++offset) {
-                        // auto it_coefs = coefficients_y.begin();
+						auto it_coefs = coefficients_y.begin();
 						//main_node_yy((*it).Uyy.begin() + offset, (*it).U.begin() + offset, (*x_left).U.begin() + offset, (*x_right).U.begin() + offset, (*it_coefs).begin());
 					}
 					break;
@@ -323,7 +326,7 @@ namespace Waves {
 		switch (initial_conditions) {
 			case 0: // Single frequency
 #pragma omp parallel for
-                for (unsigned int c = 0; c < position_information.size(); ++c) {
+				for (int c = 0; c < position_information.size(); ++c) {
 					for (unsigned int j = 0; j < stages_y; ++j)
 						for (unsigned int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0]; // [-1,1)
@@ -338,7 +341,7 @@ namespace Waves {
 				break;
 			case 1: // Continuous spectrum of frequencies
 #pragma omp parallel for
-                for (unsigned int c = 0; c < position_information.size(); ++c) {
+				for (int c = 0; c < position_information.size(); ++c) {
 					for (unsigned int j = 0; j < stages_y; ++j)
 						for (unsigned int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
@@ -357,9 +360,9 @@ namespace Waves {
 				// note: if c/bx^2 or c/by^2 is too large then the integrator will break due to a CFL condition!
 				double bx = 0.3, by = 0.3, a = 1.5, x0 = 0.0, y0 = 0.0;
 #pragma omp parallel for
-                for (unsigned int c = 0; c < position_information.size(); ++c) {
-                    for (unsigned int j = 0; j < stages_y; ++j)
-                        for (unsigned int i = 0; i < stages_x; ++i) {
+				for (int c = 0; c < position_information.size(); ++c) {
+					for (int j = 0; j < stages_y; ++j)
+						for (int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1];
 							cells[c].U[j*stages_x + i] = std::max(0.0, std::exp(a - a / bx / bx*(x - x0)*(x - x0) - a / by / by*(y - y0)*(y - y0)) - 1.0);
@@ -375,9 +378,9 @@ namespace Waves {
 				// note: if c/bx^2 or c/by^2 is too large then the integrator will break due to a CFL condition!
 				double bx = 0.3, by = 0.3, a = 1.5, x0 = sqrt(0.5)*0.5, y0 = x0;
 #pragma omp parallel for
-                for (unsigned int c = 0; c < position_information.size(); ++c) {
-                    for (unsigned int j = 0; j < stages_y; ++j)
-                        for (unsigned int i = 0; i < stages_x; ++i) {
+				for (int c = 0; c < position_information.size(); ++c) {
+					for (int j = 0; j < stages_y; ++j)
+						for (int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1];
 							if (x > 0)
@@ -396,9 +399,9 @@ namespace Waves {
 				// note: if c/bx^2 or c/by^2 is too large then the integrator will break due to a CFL condition!
 				double bx = 0.3, by = 0.3, a = 1.5, x0 = sqrt(0.5)*0.5, y0 = x0;
 #pragma omp parallel for
-                for (unsigned int c = 0; c < position_information.size(); ++c) {
-                    for (unsigned int j = 0; j < stages_y; ++j)
-                        for (unsigned int i = 0; i < stages_x; ++i) {
+				for (int c = 0; c < position_information.size(); ++c) {
+					for (int j = 0; j < stages_y; ++j)
+						for (int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1];
 							if (x > 0)
@@ -427,7 +430,7 @@ namespace Waves {
 		adjacency_information.resize(position_information.size());
 		cells.resize(position_information.size());
 #pragma omp parallel for
-        for (int c = 0; c < static_cast<int>(position_information.size()); ++c) {
+		for (int c = 0; c < position_information.size(); ++c) {
 			// Find up to 4 neighbouring cells, then assign them to top, left, right, bottom and assign Cell_Type information
 			std::array<unsigned int, 4> neighbours{ missing_index,missing_index,missing_index,missing_index };
 			int i = c - 1;
@@ -448,7 +451,7 @@ namespace Waves {
 				}
 			}
 			i = c + 1;
-            for (; i != static_cast<int>(position_information.size()); ++i) { // look for right neighbour
+			for (; i != position_information.size(); ++i) { // look for right neighbour
 				if (fabs(position_information[i][1] - position_information[c][1]) > 0.5*step_size_y) // abort if we're no longer on the same row
 					break;
 				if ((position_information[i][0] - position_information[c][0] > 0.5*step_size_x) && (position_information[i][0] - position_information[c][0] < 1.5*step_size_x)) {
@@ -456,7 +459,7 @@ namespace Waves {
 					break;
 				}
 			}
-            for (; i != static_cast<int>(position_information.size()); ++i) { // continue looking for bottom neighbour
+			for (; i != position_information.size(); ++i) { // continue looking for bottom neighbour
 				if (position_information[i][1] - position_information[c][1] > 1.5*step_size_y) // abort if we're more than 1 row ahead
 					break;
 				if ((fabs(position_information[i][0] - position_information[c][0]) < 0.5*step_size_x) && (position_information[i][1] - position_information[c][1] > 0.5*step_size_y) && (position_information[c][1] - position_information[i][1] < 1.5*step_size_y)) {
@@ -538,7 +541,7 @@ namespace Waves {
 				dx = dy = 0.1
 				wave_speed = 1^2
 				*/
-                int n = 200;
+				unsigned int n = 200;
 				cells.clear();
 				adjacency_information.clear();
 				position_information.clear();
@@ -723,6 +726,7 @@ namespace Waves {
 		return coords;
 	}
 
+	/// Our friendly ostream operator<<
 	std::ostream&  operator<<(std::ostream&  os, const Integrator&  integrator)
 	{
 		os << "A " << integrator.cells.size() << " element simulation using Lobatto IIIA-IIIB discretisation in space with " << integrator.stages_x + 1 << " stages in x, " << integrator.stages_y + 1 << " stages in y, and stepsizes " << "dx=" << integrator.step_size_x << ", dy=" << integrator.step_size_y << " and dt=" << integrator.step_size_time << ".";

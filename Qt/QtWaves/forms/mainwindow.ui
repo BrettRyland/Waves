@@ -130,6 +130,8 @@
    <header>oglwidget.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="qtwaves.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -1,8 +1,10 @@
+///@file
+
 #include "integrator_wrapper.h"
 
 namespace Waves
 {
-    Integrator_Wrapper::Integrator_Wrapper(Mesh& mesh) : m_mesh(&mesh)
+	Integrator_Wrapper::Integrator_Wrapper(Mesh& mesh, QObject *parent) : m_mesh(&mesh)
 	{
 		// A default initialisation with some nice values for the integrator.
 		// TODO: These values should be settable through the mainwindow interface and shouldn't need setting here.

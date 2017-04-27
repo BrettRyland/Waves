@@ -1,0 +1,16 @@
+/*!
+\mainpage
+Waves - A wave simulation of the nonlinear wave equation in 2 spatial dimensions and 1 time dimension for various boundary and initial conditions.
+
+
+\author Brett Ryland (b.n.ryland@gmail.com)
+
+\section intro Introduction
+The nonlinear wave equation is given by \\(u_{tt}=c^2*(u_{xx}+u_{yy})-V'(u)\\), where
+- \\(u\\) is the wave surface height
+- \\(c\\) is the wave speed
+- \\(V(u)\\) is a nonlinear potential
+- \\(V'(u)\\) its derivative w.r.t. \\(u\\).
+
+Run Waves with the option -h for commandline arguments.
+*/

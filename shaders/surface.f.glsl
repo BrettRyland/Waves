@@ -7,9 +7,9 @@ in float frag_shininess;
 in vec4 frag_specular;
 
 const vec3 light_direction = normalize(vec3(1, 2, -4));
-const vec4 light_diffuse = vec4(0.1, 0.2, 0.3, 0.0);
-const vec4 light_ambient = vec4(0.0, 0.0, 0.1, 1.0);
-const vec4 light_specular = vec4(0.0, 0.5, 0.7, 1.0);
+const vec4 light_diffuse = vec4(0.0, 0.1, 0.1, 0.7);
+const vec4 light_ambient = vec4(0.0, 0.1, 0.1, 0.7);
+const vec4 light_specular = vec4(1.0, 1.0, 1.0, 0.7);
 
 void main()
 {

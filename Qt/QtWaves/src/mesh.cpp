@@ -1,26 +1,21 @@
+///@file
+
 #include <cassert>
 #include <limits>
-//#include <algorithm>
-//#include <execution>
-//#include <boost/iterator/zip_iterator.hpp>
-
 #include <QVector3D>
-
 #include "mesh.h"
 #include "integrator.h"
 
 namespace Waves {
-	const unsigned int missing_index = std::numeric_limits<unsigned int>::max();
-
 	// Generate a surface mesh.
 	void Mesh::init_surface_mesh()
 	{
-		unsigned int vertex_count = g_waves.cells.size();
+		unsigned int vertex_count = static_cast<unsigned int>(g_waves.cells.size());
 		vertices.resize(vertex_count); // An under estimate, but it will grow as needed (most likely only once).
 		indices.clear();
 		indices.reserve(6 * g_waves.cells.size());
 		adjacency_information.resize(vertex_count);
-        // float scale{ 5.0f };
+		float scale{ 5.0f };
 
 		// Assign the components of the position, normal, shininess and specular values, adding in extra vertices as necessary.
 		// The non-static components (position[2] and normal[0-2]) are reassigned in update_surface_mesh().
@@ -150,7 +145,7 @@ namespace Waves {
 	{
 		// Copy heights
 #pragma omp parallel for
-        for (unsigned int c = 0; c < g_waves.cells.size(); ++c)
+		for (int c = 0; c < g_waves.cells.size(); ++c)
 			vertices[c].position[2] = g_waves.cells[c].U[0];
 
 		//std::for_each(
@@ -161,7 +156,7 @@ namespace Waves {
 
 		// Copy periodic cells
 #pragma omp parallel for
-        for (unsigned int c = 0; c < g_waves.cells.size(); ++c) {
+		for (int c = 0; c < g_waves.cells.size(); ++c) {
 		//std::for_each(boost::make_zip_iterator(boost::make_tuple()),, []() {
 			if (g_waves.cells[c].cell_type.first == Cell_Type::Periodic) {
 				vertices[adjacency_information[c][0]].position[2] = vertices[g_waves.adjacency_information[c][1]].position[2];
@@ -178,7 +173,7 @@ namespace Waves {
 
 		// Calculate normals
 #pragma omp parallel for
-        for (unsigned int c = 0; c < g_waves.cells.size(); ++c) {
+		for (int c = 0; c < g_waves.cells.size(); ++c) {
 			QVector3D u = { vertices[adjacency_information[c][0]].position[0] - vertices[c].position[0],vertices[adjacency_information[c][0]].position[1] - vertices[c].position[1], vertices[adjacency_information[c][0]].position[2] - vertices[c].position[2] };
 			QVector3D v = { vertices[adjacency_information[c][1]].position[0] - vertices[c].position[0],vertices[adjacency_information[c][1]].position[1] - vertices[c].position[1], vertices[adjacency_information[c][1]].position[2] - vertices[c].position[2] };
 			vertices[c].normal = QVector3D::normal(u, v);
@@ -186,7 +181,7 @@ namespace Waves {
 
 		// Copy periodic cells
 #pragma omp parallel for
-        for (unsigned int c = 0; c < g_waves.cells.size(); ++c) {
+		for (int c = 0; c < g_waves.cells.size(); ++c) {
 			if (g_waves.cells[c].cell_type.first == Cell_Type::Periodic) {
 				vertices[adjacency_information[c][0]].normal = vertices[g_waves.adjacency_information[c][1]].normal;
 				vertices[adjacency_information[c][2]].normal = vertices[g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3]].normal;

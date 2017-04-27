@@ -1,3 +1,5 @@
+///@file
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -18,7 +20,7 @@
 #define GLM_FORCE_RADIANS
 #endif // !GLM_FORCE_RADIANS
 
-// Read in the fragment or vertex shader files.
+/// Read in the fragment or vertex shader files.
 std::string file_contents(const std::string& filename)
 {
 	// read entire file into string
@@ -34,7 +36,7 @@ std::string file_contents(const std::string& filename)
 	}
 }
 
-// Show why the shader program failed to compile or link.
+/// Show why the shader program failed to compile or link.
 void show_info_log(GLuint object, PFNGLGETSHADERIVPROC glGet__iv, PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
 	GLint log_length;
@@ -44,7 +46,7 @@ void show_info_log(GLuint object, PFNGLGETSHADERIVPROC glGet__iv, PFNGLGETSHADER
 	std::cerr << log.data();
 }
 
-// Create the shader components.
+/// Create the shader components.
 GLuint make_shader(GLenum type, const char *filename)
 {
 	auto source = file_contents(filename);
@@ -66,7 +68,7 @@ GLuint make_shader(GLenum type, const char *filename)
 	return shader;
 }
 
-// Link the vertex and fragment shader components together to create the shader program.
+/// Link the vertex and fragment shader components together to create the shader program.
 GLuint make_program(GLuint vertex_shader, GLuint fragment_shader)
 {
 	GLint program_ok;
@@ -129,7 +131,8 @@ namespace Waves::Renderer {
 		);
 		glVertexAttribPointer(
 			g_resources.surface_program.attributes.specular,
-			4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Mesh::surface_vertex),
+			//4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Mesh::surface_vertex),
+			4, GL_FLOAT, GL_FALSE, sizeof(Mesh::surface_vertex),
 			(void*)offsetof(Mesh::surface_vertex, specular)
 		);
 
@@ -212,6 +215,10 @@ namespace Waves::Renderer {
 		glEnable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+		// Enable transparency
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	// glutIdleFunc callback.

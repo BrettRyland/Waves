@@ -1,8 +1,8 @@
 //#define PROGRAM_TITLE "u_tt=c^2*(u_xx+u_yy)-V'(u) -- Brett Ryland"
 
-/*
- * Integrate the non-linear wave equation with 2 spatial and 1 temporal dimensions.
- * This is done using rx-stage Lobatto IIIA-IIIB in space and 2-stage Lobatto IIIA-IIIB in time.
+/** @file
+ Integrate the non-linear wave equation with 2 spatial and 1 temporal dimensions.
+ This is done using rx-stage Lobatto IIIA-IIIB in space and 2-stage Lobatto IIIA-IIIB in time.
  */
 
 #include <iostream>
@@ -12,6 +12,7 @@
 
 using namespace Waves::Renderer;
 
+/// Entry point to program
 int main(int argc, char *argv[])
 {
 	// Initialise our simulation with some nice defaults.

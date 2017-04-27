@@ -1,5 +1,6 @@
-﻿#include <QDebug>
+﻿///@file
 
+#include <QDebug>
 #include "mainwindow.h"
 
 namespace Waves {

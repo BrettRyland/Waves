@@ -1,8 +1,7 @@
-#include <cmath>
+///@file
 
 #include <QKeyEvent>
 #include <QThread>
-
 #include "oglwidget.h"
 #include "mesh.h"
 #include "integrator_wrapper.h"
@@ -82,7 +81,7 @@ namespace Waves {
 		{
 			m_vertex_array_object.bind();
 			m_shader_program->setUniformValue(u_modelview, m_modelview.modelview);
-			glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, mesh.indices.data());
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, mesh.indices.data());
 			m_vertex_array_object.release();
 		}
 		m_shader_program->release();
@@ -113,13 +112,13 @@ namespace Waves {
 		m_index_buffer.create();
 		m_index_buffer.bind();
 		m_index_buffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-		m_index_buffer.allocate(mesh.indices.data(), mesh.indices.size() * sizeof(unsigned int));
+		m_index_buffer.allocate(mesh.indices.data(), static_cast<int>(mesh.indices.size() * sizeof(unsigned int)));
 
 		// Vertex Buffer
 		m_vertex_buffer.create();
 		m_vertex_buffer.bind();
 		m_vertex_buffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		m_vertex_buffer.allocate(mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
+		m_vertex_buffer.allocate(mesh.vertices.data(), static_cast<int>(mesh.vertices.size() * sizeof(Vertex)));
 
 		// Create Vertex Array Object
 		m_vertex_array_object.create();
@@ -145,7 +144,7 @@ namespace Waves {
 	{
 		// Update the vertex buffer based on the mesh data.
 		m_vertex_buffer.bind();
-		m_vertex_buffer.write(0, mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
+		m_vertex_buffer.write(0, mesh.vertices.data(), static_cast<int>(mesh.vertices.size() * sizeof(Vertex)));
 		m_vertex_buffer.release();
 	}
 
@@ -155,8 +154,8 @@ namespace Waves {
 		m_vertex_array_object.bind();
 		m_vertex_buffer.bind();
 		m_index_buffer.bind();
-		m_vertex_buffer.allocate(mesh.vertices.data(), mesh.vertices.size() * sizeof(Vertex));
-		m_index_buffer.allocate(mesh.indices.data(), mesh.indices.size() * sizeof(unsigned int));
+		m_vertex_buffer.allocate(mesh.vertices.data(), static_cast<int>(mesh.vertices.size() * sizeof(Vertex)));
+		m_index_buffer.allocate(mesh.indices.data(), static_cast<int>(mesh.indices.size() * sizeof(unsigned int)));
 		m_vertex_buffer.release();
 		m_index_buffer.release();
 		m_vertex_array_object.release();
@@ -307,7 +306,7 @@ namespace Waves {
 	{ // Note: we must signal to the integrator_wrapper thread before modifying the integrator
 		emit modify_integrator();
 		g_waves.Time = 0.0;
-        g_waves.Change_Initial_Conditions();
+		float hint = g_waves.Change_Initial_Conditions();
 		// Update the surface mesh and display it.
 		mesh.update_surface_mesh();
 		update_vertex_buffer();
@@ -319,7 +318,7 @@ namespace Waves {
 	{ // Note: we must signal to the integrator_wrapper thread before modifying the integrator
 		emit modify_integrator();
 		g_waves.Time = 0.0;
-        g_waves.Change_Boundary_Conditions();
+		float hint = g_waves.Change_Boundary_Conditions();
 		// Rebuild the surface mesh and display it.
 		mesh.init_surface_mesh();
 		rebuild_vertex_array_object();
