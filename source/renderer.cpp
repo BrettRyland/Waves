@@ -107,7 +107,7 @@ namespace Waves::Renderer {
 			if (max_Z == 0.0) // safety catch for a totally flat surface of height 0
 				max_Z = 1.0;
 		}
-		return glm::scale(glm::mat4(1.0f), glm::vec3{ 4.0f / max_X, 4.0f / max_Y, 3.0f * hint / max_Z });
+		return glm::scale(glm::mat4(1.0f), glm::vec3{ 4.0f / max_X, 4.0f / max_Y, 1.0f * hint / max_Z });
 	}
 
 	// Pass the surface mesh data to the shader program.
@@ -205,7 +205,7 @@ namespace Waves::Renderer {
 
 		g_resources.p_matrix = glm::perspective(1.0f, static_cast<GLfloat>(g_resources.window_size[0]) / static_cast<GLfloat>(g_resources.window_size[1]), 0.0625f, 256.0f);
 		g_resources.mv_base_matrix = glm::lookAt(g_resources.eye, g_resources.centre, g_resources.up);
-		g_resources.scale_matrix = rescale(hint);
+		//g_resources.scale_matrix = rescale(hint);
 		g_resources.mv_matrix = g_resources.mv_base_matrix * g_resources.rotation_matrix * g_resources.scale_matrix;
 	}
 
@@ -217,8 +217,8 @@ namespace Waves::Renderer {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 		// Enable transparency
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	// glutIdleFunc callback.
@@ -304,7 +304,7 @@ namespace Waves::Renderer {
 				g_waves.Time = 0.0;
 				g_resources.pause = true;
 				update_surface_mesh(g_resources.surface, g_resources.surface_vertex_array);
-				g_resources.scale_matrix = rescale(hint);
+				//g_resources.scale_matrix = rescale(hint);
 				g_resources.mv_matrix = g_resources.mv_base_matrix * g_resources.rotation_matrix * g_resources.scale_matrix;
 				break;
 			}
@@ -321,7 +321,7 @@ namespace Waves::Renderer {
 				g_waves.Time = 0.0;
 				g_resources.pause = true;
 				g_resources.surface_vertex_array = init_surface_mesh(g_resources.surface); // Rebuild the surface mesh
-				g_resources.scale_matrix = rescale(hint);
+				//g_resources.scale_matrix = rescale(hint);
 				g_resources.mv_matrix = g_resources.mv_base_matrix * g_resources.rotation_matrix * g_resources.scale_matrix;
 				break;
 			}
@@ -344,7 +344,7 @@ namespace Waves::Renderer {
 	{
 		g_resources.window_size[0] = w;
 		g_resources.window_size[1] = h;
-		g_resources.p_matrix = glm::perspective(1.0f, static_cast<GLfloat>(g_resources.window_size[0]) / static_cast<GLfloat>(g_resources.window_size[1]), 0.0625f, 256.0f);
+		g_resources.p_matrix = glm::perspective(0.7854f, static_cast<GLfloat>(g_resources.window_size[0]) / static_cast<GLfloat>(g_resources.window_size[1]), 0.1f, 1000.0f);
 		glViewport(0, 0, w, h);
 	}
 

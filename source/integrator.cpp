@@ -361,8 +361,8 @@ namespace Waves {
 				double bx = 0.3, by = 0.3, a = 1.5, x0 = 0.0, y0 = 0.0;
 #pragma omp parallel for
 				for (int c = 0; c < position_information.size(); ++c) {
-					for (int j = 0; j < stages_y; ++j)
-						for (int i = 0; i < stages_x; ++i) {
+					for (unsigned int j = 0; j < stages_y; ++j)
+						for (unsigned int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1];
 							cells[c].U[j*stages_x + i] = std::max(0.0, std::exp(a - a / bx / bx*(x - x0)*(x - x0) - a / by / by*(y - y0)*(y - y0)) - 1.0);
@@ -379,8 +379,8 @@ namespace Waves {
 				double bx = 0.3, by = 0.3, a = 1.5, x0 = sqrt(0.5)*0.5, y0 = x0;
 #pragma omp parallel for
 				for (int c = 0; c < position_information.size(); ++c) {
-					for (int j = 0; j < stages_y; ++j)
-						for (int i = 0; i < stages_x; ++i) {
+					for (unsigned int j = 0; j < stages_y; ++j)
+						for (unsigned int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1];
 							if (x > 0)
@@ -400,8 +400,8 @@ namespace Waves {
 				double bx = 0.3, by = 0.3, a = 1.5, x0 = sqrt(0.5)*0.5, y0 = x0;
 #pragma omp parallel for
 				for (int c = 0; c < position_information.size(); ++c) {
-					for (int j = 0; j < stages_y; ++j)
-						for (int i = 0; i < stages_x; ++i) {
+					for (unsigned int j = 0; j < stages_y; ++j)
+						for (unsigned int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1];
 							if (x > 0)
@@ -549,8 +549,8 @@ namespace Waves {
 				step_size_y = 0.1;
 				wave_speed = 10.0;
 				domain_scaling_factor = { n*step_size_x,n*step_size_y };
-				for (auto j = 0; j < n; ++j)
-					for (auto i = 0; i < n; ++i)
+				for (unsigned int j = 0; j < n; ++j)
+					for (unsigned int i = 0; i < n; ++i)
 						position_information.emplace_back(std::array<double, 2>{step_size_x * static_cast<int>(i - n / 2), step_size_y * static_cast<int>(j - n / 2)});
 				Find_Neighbours();
 				break;

@@ -20,8 +20,8 @@ namespace Waves::Mesh {
 	struct surface_vertex {
 		GLfloat position[4]; ///< Position in R^3 in homogeneous coordinates
 		GLfloat normal[4]{ 0.0f, 0.0f, 1.0f, 0.0f }; ///< Unit normal in R^3 in homogeneous coordinates
-		GLfloat shininess{ 0.8f }; ///< Shininess of the vertex
-		GLfloat specular[4]{ 0.0f, 0.3f, 0.7f, 0.5f }; ///< Specularity of the vertex
+		GLfloat shininess{ 20.0f }; ///< Shininess of the vertex
+		GLfloat specular[4]{ 0.1f, 0.3f, 0.7f, 1.0f }; ///< Specularity of the vertex
 		/// Constructor
 		surface_vertex(GLfloat x, GLfloat y) : position{ x, y, 0.0f, 1.0f } {};
 		surface_vertex() = default; ///< @overload

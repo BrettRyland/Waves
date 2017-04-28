@@ -41,12 +41,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="shaders\surface.frag.glsl">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="shaders\surface.vert.glsl">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="shaders\surface.f.glsl">
       <Filter>Resource Files</Filter>
     </None>

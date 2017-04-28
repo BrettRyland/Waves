@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>930</width>
-    <height>630</height>
+    <height>632</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -131,7 +131,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="qtwaves.qrc"/>
+  <include location="../qtwaves.qrc"/>
  </resources>
  <connections/>
 </ui>

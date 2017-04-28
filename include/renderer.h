@@ -33,10 +33,10 @@ namespace Waves::Renderer {
 
 		///@name Projection and modelview matrices.
 		glm::mat4 p_matrix, mv_matrix, mv_base_matrix, rotation_matrix{ 1.0f }, scale_matrix{ 1.0f };
-		glm::vec3 eye{ 0.0f, -6.0f, 6.0f }, centre{ 0.0f, 0.0f, 0.0f }, up{ 0.0f, 0.0f, 1.0f };
+		glm::vec3 eye{ 0.0f, -25.98f, 15.0f }, centre{ 0.0f, 0.0f, 0.0f }, up{ 0.0f, 0.0f, 1.0f };
 
 		int Window_ID;
-		GLsizei window_size[2]{ 1200, 800 };
+		GLsizei window_size[2]{ 800, 600 };
 		bool mouse_grab{ false };
 		bool pause{ true };
 		int mouse_click[3]{ 0, 0, 0 };

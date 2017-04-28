@@ -46,7 +46,7 @@ public:
         if (Waves__mainwindowClass->objectName().isEmpty())
             Waves__mainwindowClass->setObjectName(QStringLiteral("Waves__mainwindowClass"));
         Waves__mainwindowClass->setWindowModality(Qt::ApplicationModal);
-        Waves__mainwindowClass->resize(930, 630);
+        Waves__mainwindowClass->resize(930, 632);
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(1);
         sizePolicy.setVerticalStretch(1);

@@ -122,12 +122,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\simple.frag.glsl">
-      <Filter>Resource Files\shaders</Filter>
-    </None>
-    <None Include="shaders\simple.vert.glsl">
-      <Filter>Resource Files\shaders</Filter>
-    </None>
     <None Include="packages.config" />
     <None Include="shaders\surface.vert.glsl">
       <Filter>Resource Files\shaders</Filter>
