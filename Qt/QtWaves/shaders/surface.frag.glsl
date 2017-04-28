@@ -19,9 +19,9 @@ void main()
          reflection = reflect(mv_light_direction, normal);
 
     vec4 diffuse_factor = max(-dot(normal, mv_light_direction), 0.0) * light_diffuse;
-	vec4 frag_diffuse = frag_specular; // use the specular component as the diffuse component too
-    vec4 ambient_diffuse_factor = diffuse_factor + light_ambient;
+	vec4 frag_diffuse = vec4(frag_specular.xyz, 0.0); // use the specular component as the diffuse component too
+    vec4 ambient_diffuse_factor = diffuse_factor * frag_diffuse + light_ambient;
     vec4 specular_factor = max(pow(-dot(reflection, eye), frag_shininess), 0.0) * light_specular;
     
-    gl_FragColor = specular_factor * frag_specular + ambient_diffuse_factor * frag_diffuse;
+    gl_FragColor = specular_factor * frag_specular + ambient_diffuse_factor;
 }

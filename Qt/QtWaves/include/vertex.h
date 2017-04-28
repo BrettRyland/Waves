@@ -14,7 +14,7 @@ namespace Waves {
 		QVector3D position{ 0.0f, 0.0f, 0.0f }; ///< Position in R^3
 		QVector3D normal{ 0.0f, 0.0f, 1.0f }; ///< Vertex normal in R^3
 		float shininess{ 20.0f }; ///< Material shininess factor
-		QVector4D specular{ 0.1f, 0.3f, 0.7f, 1.0f }; ///< Material specular factor
+		QVector4D specular{ 0.1f, 0.3f, 0.7f, 0.1f }; ///< Material specular factor
 
 		/** @name Constructors and Destructors
 		@{ */

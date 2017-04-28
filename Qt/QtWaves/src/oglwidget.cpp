@@ -53,6 +53,12 @@ namespace Waves {
 		// Set global information
 		glEnable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
+		
+		// If we enable transparency, then we should draw something below the surface and sort the surface triangles from back to front before drawing.
+		//glDisable(GL_DEPTH_TEST);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 		// Make the shader program
