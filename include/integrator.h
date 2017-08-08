@@ -17,10 +17,9 @@ namespace Waves {
 		Neumann_right   = Main node uses phantom points on the right in computations, other nodes are outside the domain.
 	*/
 	enum class Cell_Type { Normal, Periodic, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right };
-	
-	const double PI = 3.141592653589793; ///< Numeric constant
+
 	const unsigned int missing_index = std::numeric_limits<unsigned int>::max(); ///< Value to use for missing indices
-	
+
 	/** The basic cell within the domain resulting from applying Lobatto IIIA-IIIB discretisation in space (x,y).
 	Each cell has stages_x * stages_y nodes.
 	*/
@@ -46,6 +45,8 @@ namespace Waves {
 		double wave_speed; ///< Wave speed
 		int initial_conditions; ///< Initial conditions indicator
 		int boundary_conditions; ///< Boudary conditions indicator
+
+		double m_artificial_dissipation{ 0.0 }; ///< Artificial dissipation amount (default: 0.0 = no dissipation). A value greater than 0.0 breaks multisymplecticity and most likely stability of time integrator
 
 		/** @name Stencils
 		@{*/
@@ -102,10 +103,15 @@ namespace Waves {
 		*/
 		float Initialise(int rx, int ry, double dt, int ic, int bc);
 
+		float Reset_Initial_Conditiones() { return Change_Initial_Conditions(initial_conditions); } ///< Reset to the current initial conditions
 		float Change_Initial_Conditions(int ic = -1); ///< Defaults to switching to the next initial condition.
 		float Change_Boundary_Conditions(int bc = -1); ///< Defaults to switching to the next initial condition. Also resets the initial conditions and returns the initial conditions hint.
 
-		/// Friendly ostream operator<<
+        void Set_Artificial_Dissipation(double value) { m_artificial_dissipation = value /*std::clamp(value, 0.0, 1.0) std::clamp is not part of gcc-6 in linux*/; } ///< Set the amount of artificial dissipation.
+		auto get_IC() { return initial_conditions; } ///< Get the current initial conditions
+		auto get_BC() { return boundary_conditions; } ///< Get the current boundary conditions
+
+		// Friendly ostream operator<<
 		friend std::ostream& operator<< (std::ostream& os, const Integrator& integrator);
 	};
 

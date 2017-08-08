@@ -16,16 +16,14 @@ namespace Waves {
 		~mainwindow(); ///< Destructor
 
 	public slots:
-		void on_pauseButton_clicked(); ///< Handle the pause button being clicked
-		void update_pauseButton(); ///< Update the text on the pause button to reflect the current state
-		void on_fullscreenButton_clicked(); ///< Handle the fullscreen button being clicked
+		void on_pause_Button_clicked(); ///< Handle the pause button being clicked
+		void update_pause_Button(); ///< Update the text on the pause button to reflect the current state
+		void on_fullscreen_Button_clicked(); ///< Handle the fullscreen button being clicked
 
 	signals:
 		// We pass various events directly to the underlying OpenGLWidget
-		void on_ICButton_clicked(); ///< Change initial conditions signal
-		void on_BCButton_clicked(); ///< Change boundary conditions signal
-		void on_resetviewButton_clicked(); ///< Reset view signal
-		void on_quitButton_clicked(); ///< Quit signal
+		void on_reset_view_Button_clicked(); ///< Reset view signal
+		void on_quit_Button_clicked(); ///< Quit signal
 
 	private:
 		Ui::mainwindowClass *ui; ///< Main ui handle

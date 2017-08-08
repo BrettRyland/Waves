@@ -4,20 +4,11 @@
 
 namespace Waves
 {
-	Integrator_Wrapper::Integrator_Wrapper(Mesh& mesh, QObject *parent) : m_mesh(&mesh)
+	void Integrator_Wrapper::initialise(double dt, int rx, int ry, int ic, int bc, boost::compute::context &shared_context, boost::compute::command_queue &queue)
 	{
-		// A default initialisation with some nice values for the integrator.
-		// TODO: These values should be settable through the mainwindow interface and shouldn't need setting here.
-		double dt = 0.01667; // 1/60 (aiming for 60fps once timing is implemented)
-		int rx = 2; // Number of stages in x.
-		int ry = 2; // Number of stages in y.
-		int IC = 4; // Continuous spectrum of frequencies in a central localised hump.
-		int BC = 3; // Square Dirichlet (i.e. fixed) boundary.
-		g_waves.Initialise(rx, ry, dt, IC, BC);
-	}
-
-	Integrator_Wrapper::~Integrator_Wrapper()
-	{
+		m_integrator.initialise(rx, ry, static_cast<integrator_precision>(dt), ic, bc, shared_context, queue);
+		m_mesh.generate_surface_mesh(m_integrator);
+		m_mesh.generate_mesh_update_kernel(m_integrator);
 	}
 
 	// Our modified run() function.
@@ -28,11 +19,10 @@ namespace Waves
 				// Integrator is running, so it's not safe to modify it.
 				m_modifiable = false;
 				// Actually perform one step of the integrator.
-				g_waves.Step();
-				// Update the surface mesh heights and normals.
-				m_mesh->update_surface_mesh();
+				m_integrator.step();
+				++m_step_counter;
 				// Signal that we're done.
-				emit resultReady();
+				emit result_ready();
 			}
 			else {
 				// Integrator is paused, so it's safe to modify it now.
@@ -49,7 +39,7 @@ namespace Waves
 		// Pause the integrator.
 		m_paused = true;
 		// Wait until it's safe to modify the integrator by telling the calling thread to sleep for a bit (this is a slot in a single run QThread class, so it runs in the parent thread).
-		while (!m_modifiable)
+		while (!m_modifiable) // FIXME: this should probably now be done with m_queue.finish()
 			QThread::msleep(100);
 	}
 

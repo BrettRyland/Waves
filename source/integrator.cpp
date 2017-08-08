@@ -5,7 +5,9 @@
 #include <numeric> // for std::inner_product
 #include <limits> // for std::numeric_limits::max()
 #include <cassert> // for assert()
+//#include <execution> // for parallel execution policies
 #include "integrator.h"
+#include "br/common/mathconstants.h"
 
 namespace Waves {
 	/// Our global instance of the Integrator. This needs to be global for OpenGL to access it.
@@ -32,32 +34,35 @@ namespace Waves {
 	\param[in] stages_x is the number of stages in the x direction
 	\param[in] stages_y is the number of stages in the y direction
 	*/
-	void Generate_Update_Mask(std::vector<bool>&  mask, const Cell&  cell, unsigned int stages_x, unsigned int stages_y)
+	void Generate_Update_Mask(std::vector<bool>& mask, const Cell& cell, unsigned int stages_x, unsigned int stages_y)
 	{
-		auto it = mask.begin();
 		int i;
 		switch (cell.cell_type.first) { // x-direction.
 			case Cell_Type::Normal:
 			case Cell_Type::Periodic:
 			case Cell_Type::Neumann_left:
-				mask.assign(stages_x*stages_y, true);
+				for (auto&& m : mask)
+					m = true;
 				break;
 			case Cell_Type::Neumann_right:
-				for (it = mask.begin(), i = 0; it != mask.end(); ++it, ++i)
+				i = 0;
+				for (auto it = mask.begin(); it != mask.end(); ++it, ++i)
 					if (i % stages_x != 0)
 						*it = false;
 					else
 						*it = true;
 				break;
 			case Cell_Type::Dirichlet_left:
-				for (it = mask.begin(), i = 0; it != mask.end(); ++it, ++i)
+				i = 0;
+				for (auto it = mask.begin(); it != mask.end(); ++it, ++i)
 					if (i % stages_x != 0)
 						*it = true;
 					else
 						*it = false;
 				break;
 			case Cell_Type::Dirichlet_right:
-				mask.assign(stages_x*stages_y, false);
+				for (auto && m : mask)
+					m = false;
 				break;
 			default:
 				throw std::runtime_error("Invalid cell type.");
@@ -68,15 +73,16 @@ namespace Waves {
 			case Cell_Type::Neumann_left:
 				break;
 			case Cell_Type::Neumann_right:
-				for (it = mask.begin() + stages_x; it != mask.end(); ++it)
+				for (auto it = mask.begin() + stages_x; it != mask.end(); ++it)
 					*it = false;
 				break;
 			case Cell_Type::Dirichlet_left:
-				for (it = mask.begin(); it != mask.begin() + stages_x; ++it)
+				for (auto it = mask.begin(); it != mask.begin() + stages_x; ++it)
 					*it = false;
 				break;
 			case Cell_Type::Dirichlet_right:
-				mask.assign(stages_x*stages_y, false);
+				for (auto && m : mask)
+					m = false;
 				break;
 			default:
 				throw std::runtime_error("Invalid cell type.");
@@ -88,9 +94,8 @@ namespace Waves {
 	{
 		auto derivative_of_the_potential = [](double i) {return 2 * i + 4 * i*i*i; }; // V'(u)=2*u+4*u^3
 #pragma omp parallel for
-		for (auto c = 0; c < cells.size(); ++c) {
+		for (auto c = 0; c < cells.size(); ++c) { // Note: we use this kind of for-loop for omp, otherwise we could use a range-for or a for_each with std::execution::par_unseq
 			std::vector<bool> mask(stages_x*stages_y, true);
-			//for (auto& cell : cells) {
 			Generate_Update_Mask(mask, cells[c], stages_x, stages_y);
 			auto it_mask = mask.begin();
 			auto it_V = cells[c].V.begin();
@@ -108,16 +113,20 @@ namespace Waves {
 	void Integrator::Step_U(double step_size)
 	{
 #pragma omp parallel for
-		for (auto c = 0; c < cells.size(); ++c) {
+		for (auto c = 0; c < cells.size(); ++c) { // Note: we use this kind of for-loop for omp, otherwise we could use a range-for or a for_each with std::execution::par_unseq
 			std::vector<bool> mask(stages_x*stages_y, true);
-			//for (auto& cell : cells) {
 			Generate_Update_Mask(mask, cells[c], stages_x, stages_y);
 			auto it_mask = mask.begin();
 			auto it_U = cells[c].U.begin();
 			auto it_V = cells[c].V.begin();
-			for (; it_U != cells[c].U.end(); ++it_U, ++it_V)
-				if (*it_mask)
-					*it_U += step_size * (*it_V);
+			auto it_U_xx = cells[c].U_xx.begin();
+			auto it_U_yy = cells[c].U_yy.begin();
+			for (; it_U != cells[c].U.end(); ++it_U, ++it_V, ++it_mask, ++it_U_xx, ++it_U_yy)
+				if (*it_mask) {
+					*it_U += step_size * *it_V; // No dissipation
+					//*it_U += step_size * (*it_V + m_artificial_dissipation*wave_speed*(*it_U_xx + *it_U_yy)); // Selectively dampens high curvature parts, keep m_artificial_dissipation small to avoid blow-up
+					*it_U *= 1.0 - step_size*m_artificial_dissipation; // Dampens everything evenly, doesn't introduce instability, but should probably be implemented as something like pow(1.0-m_artificial_dissipation,step_size)
+				}
 		}
 		update_U_dependent_variables();
 	}
@@ -220,14 +229,14 @@ namespace Waves {
 		};
 
 		// Function to apply the first coefficient stencil to the local cell centred on the main node (includes all values in cell to the left and first value in cell to right).
-		auto main_node_yy = [this,& inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_left, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
+		auto main_node_yy = [this, &inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_left, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 			return inner_product_n(it_U_left, it_coefs, stages_y, stages_x,
 				inner_product_n(it_U, it_coefs + stages_y, stages_y, stages_x, // *it_coefs has size 2*stages_x+1, so this selects the middle value
 					*it_U_right * *(it_coefs + 2 * stages_y))) / step_size_y / step_size_y;
 		};
 
 		// Function to apply the remaining coefficient stencils to the local cell (includes first value in cell to the right).
-		auto internal_node_yy = [this,& inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
+		auto internal_node_yy = [this, &inner_product_n](std::vector<double>::const_iterator it_U, std::vector<double>::const_iterator it_U_right, std::vector<double>::const_iterator it_coefs) {
 			return inner_product_n(it_U, it_coefs, stages_y, stages_x, *it_U_right * *(it_coefs + stages_y)) / step_size_y / step_size_y; // *it_coefs has size stages_x+1, so this selects the last value
 		};
 
@@ -331,10 +340,10 @@ namespace Waves {
 						for (unsigned int i = 0; i < stages_x; ++i) {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0]; // [-1,1)
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1]; // [-1,1)
-							// u=cos(2*PI*(t+c1*x+c2*y)), which has a wave speed of sqrt(c1^2+c2^2)
-							cells[c].U[j*stages_x + i] = cos(2.0*PI*(2.0*x + 1.0*y));
+							// u=cos(br::tau<double>*(t+c1*x+c2*y)), which has a wave speed of sqrt(c1^2+c2^2)
+							cells[c].U[j*stages_x + i] = cos(br::tau<double>*(2.0*x + 1.0*y));
 							// set V to be the derivative of U to get a travelling wave train
-							cells[c].V[j*stages_x + i] = -0.5*PI*PI * std::sin(2.0*PI*(2.0*x + 1.0*y));
+							cells[c].V[j*stages_x + i] = -0.5*br::pi<double>*br::pi<double> * std::sin(br::tau<double>*(2.0*x + 1.0*y));
 						}
 				}
 				hint = 0.25f;
@@ -347,7 +356,7 @@ namespace Waves {
 							auto x = (position_information[c][0] + coords_x[i] * step_size_x) * 2.0 / domain_scaling_factor[0];
 							auto y = (position_information[c][1] + coords_y[j] * step_size_y) * 2.0 / domain_scaling_factor[1];
 							// this choice should be zero along the edge of the domain but non-zero everywhere else
-							cells[c].U[j*stages_x + i] = 0.0625*(std::exp(std::sin((1.0*x + 0.5)*PI) + 1.0) - 1.0)*(std::exp(std::sin((1.0*y + 0.5)*PI) + 1.0) - 1.0);
+							cells[c].U[j*stages_x + i] = 0.0625*(std::exp(std::sin((1.0*x + 0.5)*br::pi<double>) + 1.0) - 1.0)*(std::exp(std::sin((1.0*y + 0.5)*br::pi<double>) + 1.0) - 1.0);
 						}
 					// start with stationary surface
 					std::fill(cells[c].V.begin(), cells[c].V.end(), 0.0);
@@ -555,7 +564,7 @@ namespace Waves {
 				Find_Neighbours();
 				break;
 			}
-			case 2: // Circle with Dirichlet boudaries.
+			case 2: // Circle with Dirichlet boundaries.
 			{
 				/*
 				Circle of radius n/2 centred at the origin.
@@ -726,11 +735,18 @@ namespace Waves {
 		return coords;
 	}
 
-	/// Our friendly ostream operator<<
-	std::ostream&  operator<<(std::ostream&  os, const Integrator&  integrator)
+	/// Friendly ostream operator<<
+	std::ostream& operator<<(std::ostream& os, const Integrator& integrator)
 	{
 		os << "A " << integrator.cells.size() << " element simulation using Lobatto IIIA-IIIB discretisation in space with " << integrator.stages_x + 1 << " stages in x, " << integrator.stages_y + 1 << " stages in y, and stepsizes " << "dx=" << integrator.step_size_x << ", dy=" << integrator.step_size_y << " and dt=" << integrator.step_size_time << ".";
 		return os;
 	}
 
+	// Apply artificial dissipation to the system, this breaks multisymplecticity if m_artificial_dissipation > 0.0
+	//void Integrator::Apply_Artificial_Dissipation() {
+	//	if (m_artificial_dissipation > 0.0)
+	//		std::for_each(cells.begin(), cells.end(), // insert ExecutionPolicy std::execution::par_unseq here when VS implements it
+	//			[this](Cell & cell) {std::for_each(cell.U.begin(), cell.U.end(),
+	//				[this](double & v) {v *= 1.0 - m_artificial_dissipation; }); });
+	//}
 }

@@ -9,7 +9,6 @@
 #include <QMatrix4x4>
 
 #include "ui_oglwidget.h"
-#include "mesh.h"
 #include "integrator_wrapper.h"
 
 namespace Waves {
@@ -22,7 +21,7 @@ namespace Waves {
 	class Modelview
 	{
 	public:
-		/**@name 4x4 transformation matrices
+		/** @name 4x4 transformation matrices
 		These default to the identity
 		@{*/
 		QMatrix4x4 base, ///< The intial viewing position
@@ -58,23 +57,37 @@ namespace Waves {
 	public slots:
 		void update(); ///< Update the display
 		inline void reset_view() { m_modelview.reset(); QOpenGLWidget::update(); } ///< Revert to the default view
-		void change_initial_conditions(); ///< Switch to the next set of initial conditions
-		void change_boundary_conditions(); ///< Switch to the next set of boundary conditions
-		inline bool is_paused() { return integrator_wrapper.is_paused(); } ///< Return the paused state
+		void change_initial_conditions(int ic = -1); ///< Switch to the next set of initial conditions
+		void change_boundary_conditions(int bc = -1); ///< Switch to the next set of boundary conditions
+		inline bool is_paused() { return m_integrator_wrapper.is_paused(); } ///< Return the paused state
 		void quit(); ///< Quit
+		void change_dissipation(double value); ///< Change the value of the dissipation
+		void change_timestep(double timestep); ///< Change the value of the timestep
+		double const get_time() const { return m_integrator_wrapper.get_time(); } ///< Get the time reported by the simulation (i.e. the time step * number of steps)
+		size_t const get_spf() { return m_integrator_wrapper.get_steps_taken(); } ///< Get the number of steps taken since last time this function was called
 
 	signals:
 		void pause_integrator(); ///< Pause the integrator
 		void unpause_integrator(); ///< Unpause the integrator
 		void toggle_paused_integrator(); ///< Toggle the pause state
+		void notify_paused_state(); ///< Notify the main window of the paused state
+		void notify_IC_changed(int ic); ///< Notify the main window of the IC change
+		void notify_BC_changed(int bc); ///< Notify the main window of the BC change
 		void modify_integrator(); ///< Used to signal to the integrator thread that we are going to change something important (i.e. avoids concurrency problems)
 		void toggle_fullscreen(); ///< Toggle fullscreen mode @todo{This is not implemented yet.}
+		void update_time(); ///< Signal to the main ui to update the displayed time
+		void notify_time_step(double dt); ///< Notify the main window of the time step
 
 	private:
+		/**@name Boost compute information
+		@{ */
+		boost::compute::context m_shared_context; ///< The compute context
+		boost::compute::command_queue m_queue; ///< The compute queue
+		///@}
+
 		/**@name Integrator information
 		@{ */
-		Waves::Mesh mesh; ///< The mesh for rendering
-		Integrator_Wrapper integrator_wrapper{ mesh, this }; ///< A wrapper around the integrator to allow it to run in its own thread
+		Integrator_Wrapper m_integrator_wrapper; ///< A wrapper around the integrator to allow it to run in its own thread
 		void run_integrator(); ///< Actually set the integrator running in its thread
 		///@}
 
@@ -103,12 +116,13 @@ namespace Waves {
 		void make_shader_program(); ///< Build and link the shader programs from the glsl files
 		void update_vertex_buffer(); ///< Update the vertex buffer based on the mesh data
 		void rebuild_vertex_array_object(); ///< Rebuild the entire vertex array object after the structure of the mesh has been modified (not just updated values)
+		bool m_render_frame{true}; /// Ignore frames that are generated too fast
 		///@}
 
 		/**@name Mouse and key event helpers and handlers
 		@{ */
-		QPoint mouse_press_location; ///< Location of a mouse click
-		Qt::MouseButton mouse_button_pressed; ///< Which mouse button was pressed
+		QPoint m_mouse_press_location; ///< Location of a mouse click
+		Qt::MouseButton m_mouse_button_pressed; ///< Which mouse button was pressed
 		void keyPressEvent(QKeyEvent *event); ///< Handle key press events
 		void mousePressEvent(QMouseEvent *event); ///< Handle mouse press events
 		void mouseReleaseEvent(QMouseEvent *event); ///< Hanlde mouse release events
@@ -116,5 +130,7 @@ namespace Waves {
 		void wheelEvent(QWheelEvent *event); ///< Handle mouse wheel events
 		void mouseDoubleClickEvent(QMouseEvent *event); ///< Handle mouse double-click events
 		///@}
+
+		double m_max_fps{ 60.0 }; ///< The maximum framerate at which to update the OpenGL widget
 	};
 }

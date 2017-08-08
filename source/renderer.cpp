@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
+#include <thread>
 #include <GL/glew.h>
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
@@ -227,6 +229,9 @@ namespace Waves::Renderer {
 		if (!g_resources.pause) {
 			g_waves.Step();
 			update_surface_mesh(g_resources.surface, g_resources.surface_vertex_array);
+		}
+		else {
+			std::this_thread::sleep_for(std::chrono::milliseconds(16)); // sleep for 1/60s
 		}
 		glutPostRedisplay();
 	}

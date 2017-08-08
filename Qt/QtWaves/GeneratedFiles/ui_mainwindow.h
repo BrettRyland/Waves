@@ -13,8 +13,11 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QDoubleSpinBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSpacerItem>
@@ -32,13 +35,16 @@ public:
     QHBoxLayout *horizontalLayout;
     OGLWidget *openGLWidget;
     QVBoxLayout *verticalLayout;
-    QPushButton *ICButton;
-    QPushButton *BCButton;
-    QPushButton *pauseButton;
-    QPushButton *fullscreenButton;
-    QPushButton *resetviewButton;
+    QComboBox *IC_comboBox;
+    QComboBox *BC_comboBox;
+    QPushButton *pause_Button;
+    QDoubleSpinBox *timestep_doubleSpinBox;
+    QLineEdit *time_lineEdit;
+    QDoubleSpinBox *dissipation_doubleSpinBox;
+    QPushButton *fullscreen_Button;
+    QPushButton *reset_view_Button;
     QSpacerItem *verticalSpacer;
-    QPushButton *quitButton;
+    QPushButton *quit_Button;
     QToolBar *mainToolBar;
 
     void setupUi(QMainWindow *Waves__mainwindowClass)
@@ -46,7 +52,7 @@ public:
         if (Waves__mainwindowClass->objectName().isEmpty())
             Waves__mainwindowClass->setObjectName(QStringLiteral("Waves__mainwindowClass"));
         Waves__mainwindowClass->setWindowModality(Qt::ApplicationModal);
-        Waves__mainwindowClass->resize(930, 632);
+        Waves__mainwindowClass->resize(1024, 600);
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(1);
         sizePolicy.setVerticalStretch(1);
@@ -74,39 +80,66 @@ public:
         verticalLayout = new QVBoxLayout();
         verticalLayout->setSpacing(6);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
-        ICButton = new QPushButton(centralWidget);
-        ICButton->setObjectName(QStringLiteral("ICButton"));
+        IC_comboBox = new QComboBox(centralWidget);
+        IC_comboBox->setObjectName(QStringLiteral("IC_comboBox"));
 
-        verticalLayout->addWidget(ICButton);
+        verticalLayout->addWidget(IC_comboBox);
 
-        BCButton = new QPushButton(centralWidget);
-        BCButton->setObjectName(QStringLiteral("BCButton"));
+        BC_comboBox = new QComboBox(centralWidget);
+        BC_comboBox->setObjectName(QStringLiteral("BC_comboBox"));
 
-        verticalLayout->addWidget(BCButton);
+        verticalLayout->addWidget(BC_comboBox);
 
-        pauseButton = new QPushButton(centralWidget);
-        pauseButton->setObjectName(QStringLiteral("pauseButton"));
+        pause_Button = new QPushButton(centralWidget);
+        pause_Button->setObjectName(QStringLiteral("pause_Button"));
 
-        verticalLayout->addWidget(pauseButton);
+        verticalLayout->addWidget(pause_Button);
 
-        fullscreenButton = new QPushButton(centralWidget);
-        fullscreenButton->setObjectName(QStringLiteral("fullscreenButton"));
+        timestep_doubleSpinBox = new QDoubleSpinBox(centralWidget);
+        timestep_doubleSpinBox->setObjectName(QStringLiteral("timestep_doubleSpinBox"));
+        timestep_doubleSpinBox->setAlignment(Qt::AlignCenter);
+        timestep_doubleSpinBox->setDecimals(4);
+        timestep_doubleSpinBox->setMinimum(0);
+        timestep_doubleSpinBox->setMaximum(0.1);
+        timestep_doubleSpinBox->setSingleStep(0.0001);
+        timestep_doubleSpinBox->setValue(0.0167);
 
-        verticalLayout->addWidget(fullscreenButton);
+        verticalLayout->addWidget(timestep_doubleSpinBox);
 
-        resetviewButton = new QPushButton(centralWidget);
-        resetviewButton->setObjectName(QStringLiteral("resetviewButton"));
+        time_lineEdit = new QLineEdit(centralWidget);
+        time_lineEdit->setObjectName(QStringLiteral("time_lineEdit"));
+        time_lineEdit->setAlignment(Qt::AlignCenter);
+        time_lineEdit->setReadOnly(true);
 
-        verticalLayout->addWidget(resetviewButton);
+        verticalLayout->addWidget(time_lineEdit);
+
+        dissipation_doubleSpinBox = new QDoubleSpinBox(centralWidget);
+        dissipation_doubleSpinBox->setObjectName(QStringLiteral("dissipation_doubleSpinBox"));
+        dissipation_doubleSpinBox->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+        dissipation_doubleSpinBox->setDecimals(3);
+        dissipation_doubleSpinBox->setMaximum(1);
+        dissipation_doubleSpinBox->setSingleStep(0.001);
+
+        verticalLayout->addWidget(dissipation_doubleSpinBox);
+
+        fullscreen_Button = new QPushButton(centralWidget);
+        fullscreen_Button->setObjectName(QStringLiteral("fullscreen_Button"));
+
+        verticalLayout->addWidget(fullscreen_Button);
+
+        reset_view_Button = new QPushButton(centralWidget);
+        reset_view_Button->setObjectName(QStringLiteral("reset_view_Button"));
+
+        verticalLayout->addWidget(reset_view_Button);
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         verticalLayout->addItem(verticalSpacer);
 
-        quitButton = new QPushButton(centralWidget);
-        quitButton->setObjectName(QStringLiteral("quitButton"));
+        quit_Button = new QPushButton(centralWidget);
+        quit_Button->setObjectName(QStringLiteral("quit_Button"));
 
-        verticalLayout->addWidget(quitButton);
+        verticalLayout->addWidget(quit_Button);
 
 
         horizontalLayout->addLayout(verticalLayout);
@@ -118,18 +151,60 @@ public:
 
         retranslateUi(Waves__mainwindowClass);
 
+        IC_comboBox->setCurrentIndex(0);
+        BC_comboBox->setCurrentIndex(0);
+
+
         QMetaObject::connectSlotsByName(Waves__mainwindowClass);
     } // setupUi
 
     void retranslateUi(QMainWindow *Waves__mainwindowClass)
     {
         Waves__mainwindowClass->setWindowTitle(QApplication::translate("Waves::mainwindowClass", "QtGL", Q_NULLPTR));
-        ICButton->setText(QApplication::translate("Waves::mainwindowClass", "Initial Condition", Q_NULLPTR));
-        BCButton->setText(QApplication::translate("Waves::mainwindowClass", "Boundary Condition", Q_NULLPTR));
-        pauseButton->setText(QApplication::translate("Waves::mainwindowClass", "Pause", Q_NULLPTR));
-        fullscreenButton->setText(QApplication::translate("Waves::mainwindowClass", "Fullscreen", Q_NULLPTR));
-        resetviewButton->setText(QApplication::translate("Waves::mainwindowClass", "Reset view", Q_NULLPTR));
-        quitButton->setText(QApplication::translate("Waves::mainwindowClass", "Quit", Q_NULLPTR));
+        IC_comboBox->clear();
+        IC_comboBox->insertItems(0, QStringList()
+         << QApplication::translate("Waves::mainwindowClass", "Single frequency", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Continuous spectrum", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Localised hump", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Two localised humps", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Off-centre localised hump", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "A localised wave", Q_NULLPTR)
+        );
+#ifndef QT_NO_TOOLTIP
+        IC_comboBox->setToolTip(QApplication::translate("Waves::mainwindowClass", "Initial conditions", Q_NULLPTR));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_STATUSTIP
+        IC_comboBox->setStatusTip(QString());
+#endif // QT_NO_STATUSTIP
+#ifndef QT_NO_WHATSTHIS
+        IC_comboBox->setWhatsThis(QApplication::translate("Waves::mainwindowClass", "Initial conditions", Q_NULLPTR));
+#endif // QT_NO_WHATSTHIS
+        BC_comboBox->clear();
+        BC_comboBox->insertItems(0, QStringList()
+         << QApplication::translate("Waves::mainwindowClass", "Periodic square", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Dirichlet, square", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Dirichlet, circle", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Dirichlet, circle with a cusp", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Dirichlet, intersecting circles", Q_NULLPTR)
+         << QApplication::translate("Waves::mainwindowClass", "Double slit (mixed BCs)", Q_NULLPTR)
+        );
+#ifndef QT_NO_TOOLTIP
+        BC_comboBox->setToolTip(QApplication::translate("Waves::mainwindowClass", "Boundary Conditions", Q_NULLPTR));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_WHATSTHIS
+        BC_comboBox->setWhatsThis(QApplication::translate("Waves::mainwindowClass", "Boundary Conditions", Q_NULLPTR));
+#endif // QT_NO_WHATSTHIS
+        pause_Button->setText(QApplication::translate("Waves::mainwindowClass", "Pause", Q_NULLPTR));
+        timestep_doubleSpinBox->setPrefix(QApplication::translate("Waves::mainwindowClass", "Timestep: ", Q_NULLPTR));
+        timestep_doubleSpinBox->setSuffix(QApplication::translate("Waves::mainwindowClass", "s", Q_NULLPTR));
+        time_lineEdit->setPlaceholderText(QString());
+#ifndef QT_NO_TOOLTIP
+        dissipation_doubleSpinBox->setToolTip(QApplication::translate("Waves::mainwindowClass", "Artificial dissipation", Q_NULLPTR));
+#endif // QT_NO_TOOLTIP
+        dissipation_doubleSpinBox->setPrefix(QApplication::translate("Waves::mainwindowClass", "Dissipation factor: ", Q_NULLPTR));
+        fullscreen_Button->setText(QApplication::translate("Waves::mainwindowClass", "Fullscreen", Q_NULLPTR));
+        reset_view_Button->setText(QApplication::translate("Waves::mainwindowClass", "Reset view", Q_NULLPTR));
+        quit_Button->setText(QApplication::translate("Waves::mainwindowClass", "Quit", Q_NULLPTR));
     } // retranslateUi
 
 };

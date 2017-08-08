@@ -6,6 +6,7 @@
 
 namespace Waves {
 	/** A class containing the vertex information the OpenGL requires
+	@note If this class is changed, then the relevant changes must be propagated to the OpenCL kernel in mesh.cpp
 	*/
 	class Vertex
 	{

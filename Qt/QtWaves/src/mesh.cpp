@@ -3,131 +3,210 @@
 #include <cassert>
 #include <limits>
 #include <QVector3D>
+#include <QOpenglFunctions>
 #include "mesh.h"
-#include "integrator.h"
+#include <boost/compute/interop/opengl.hpp>
 
 namespace Waves {
 	// Generate a surface mesh.
-	void Mesh::init_surface_mesh()
+	// Note: This only assigns "static" data that doesn't change each step. The surface heights and normals are assigned in update_surface_mesh, but that has to wait until the vertex buffer object is allocated on the rendering device.
+	void Mesh::generate_surface_mesh(Integrator & integrator)
 	{
-		unsigned int vertex_count = static_cast<unsigned int>(g_waves.cells.size());
-		vertices.resize(vertex_count); // An under estimate, but it will grow as needed (most likely only once).
-		indices.clear();
-		indices.reserve(6 * g_waves.cells.size());
-		adjacency_information.resize(vertex_count);
+		cl_uint vertex_count{ integrator.num_cells };
+		m_vertices.resize(vertex_count); // An under estimate, but it will grow as needed (most likely only once).
+		extra_vertices_duplicate_infomation.clear();
+		m_indices.clear();
+		m_indices.reserve(6 * integrator.num_cells);
+		mesh_adjacency_information.resize(vertex_count);
+		auto integrator_position_information = integrator.host_position_information;// integrator.get_position_information();
+		auto integrator_adjacency_information = integrator.host_adjacency_information;// integrator.get_adjacency_information();
+		auto cell_type_x = integrator.host_cell_type_x;// integrator.get_cell_type_x();
+		auto cell_type_y = integrator.host_cell_type_y;// integrator.get_cell_type_y();
+		assert(integrator_position_information.size() == 2 * vertex_count);
+		assert(integrator_adjacency_information.size() == 4 * vertex_count);
+		assert(cell_type_x.size() == vertex_count);
+		assert(cell_type_y.size() == vertex_count);
 
 		// Assign the components of the position, normal, shininess and specular values, adding in extra vertices as necessary.
 		// The non-static components (position[2] and normal[0-2]) are reassigned in update_surface_mesh().
-		// FIXME: We should not draw cells for Dirichlet_right and Neumann_right.
-		for (unsigned int c = 0; c < g_waves.cells.size(); ++c) {
-			vertices[c] = { static_cast<float>(g_waves.position_information[c][0]), static_cast<float>(g_waves.position_information[c][1]) };
-			switch (g_waves.cells[c].cell_type.first) {
+		// Note: of the extra vertices that are created, some of them may be duplicates, but the percentage of these should be low as they only occur along the boundaries.
+		// Note: no cell can be both a left and right boundary at the same time.
+		for (cl_uint c = 0; c < integrator.num_cells; ++c) {
+			m_vertices[c] = { static_cast<float>(integrator_position_information[2 * c + 0]), static_cast<float>(integrator_position_information[2 * c + 1]) };
+			switch (cell_type_x[c]) {
 				case Cell_Type::Normal:
+				case Cell_Type::Periodic_left:
 				case Cell_Type::Dirichlet_left:
 				case Cell_Type::Neumann_left:
 					// Right vertex exists
-					switch (g_waves.cells[c].cell_type.second) {
+					switch (cell_type_y[c]) {
 						case Cell_Type::Normal:
+						case Cell_Type::Periodic_left:
 						case Cell_Type::Dirichlet_left:
 						case Cell_Type::Neumann_left:
 							// The top vertex exists
-							switch (g_waves.cells[g_waves.adjacency_information[c][1]].cell_type.second) {
+							mesh_adjacency_information[c] = { integrator_adjacency_information[4 * c + 1], integrator_adjacency_information[4 * c + 3] };
+							switch (cell_type_y[integrator_adjacency_information[4 * c + 1]]) {
 								case Cell_Type::Normal:
+								case Cell_Type::Periodic_left:
 								case Cell_Type::Dirichlet_left:
 								case Cell_Type::Neumann_left:
 									// All vertices exist
-									adjacency_information[c] = { g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] };
-									indices.insert(indices.end(), { c, g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[c][1], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3], g_waves.adjacency_information[c][3] });
+									m_indices.insert(m_indices.end(), { c, integrator_adjacency_information[4 * c + 1], integrator_adjacency_information[4 * c + 3], integrator_adjacency_information[4 * c + 1], integrator_adjacency_information[4 * integrator_adjacency_information[4 * c + 1] + 3], integrator_adjacency_information[4 * c + 3] });
 									break;
-								case Cell_Type::Periodic:
+								case Cell_Type::Periodic_right:
 								case Cell_Type::Dirichlet_right:
 								case Cell_Type::Neumann_right:
 									// Top right vertex is missing
-									vertices.emplace_back(Vertex{ static_cast<float>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<float>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-									adjacency_information[c] = { g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], vertex_count };
-									indices.insert(indices.end(), { c, g_waves.adjacency_information[c][1], g_waves.adjacency_information[c][3], g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][3] });
+									m_vertices.emplace_back(Vertex{ static_cast<float>(integrator_position_information[2 * c + 0] + integrator.step_size_x),static_cast<float>(integrator_position_information[2 * c + 1] + integrator.step_size_y) });
+									switch (cell_type_y[integrator_adjacency_information[4 * c + 1]]) {
+										case Cell_Type::Periodic_right:
+											extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * integrator_adjacency_information[4 * c + 1] + 3]); // Copy infomation from periodic node of right cell.
+											break;
+										default:
+											extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 1]); // Copy information from main node of right cell.
+											break;
+									}
+									m_indices.insert(m_indices.end(), { c, integrator_adjacency_information[4 * c + 1], integrator_adjacency_information[4 * c + 3], integrator_adjacency_information[4 * c + 1], vertex_count, integrator_adjacency_information[4 * c + 3] });
 									++vertex_count;
 									break;
 								default:
 									throw std::runtime_error("Invalid cell type.");
 							}
 							break;
-						case Cell_Type::Periodic:
-						case Cell_Type::Dirichlet_right:
-						case Cell_Type::Neumann_right:
+						case Cell_Type::Periodic_right:
 							// The top vertex is missing
-							vertices.emplace_back(Vertex{ static_cast<float>(g_waves.position_information[c][0]),static_cast<float>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-							switch (g_waves.cells[g_waves.adjacency_information[c][1]].cell_type.second) {
+							m_vertices.emplace_back(Vertex{ static_cast<float>(integrator_position_information[2 * c + 0]),static_cast<float>(integrator_position_information[2 * c + 1] + integrator.step_size_y) });
+							extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 3]); // Copy infomation from periodic node of this cell.
+							mesh_adjacency_information[c] = { integrator_adjacency_information[4 * c + 1], vertex_count };
+							switch (cell_type_y[integrator_adjacency_information[4 * c + 1]]) {
 								case Cell_Type::Normal:
+								case Cell_Type::Periodic_left:
 								case Cell_Type::Dirichlet_left:
 								case Cell_Type::Neumann_left:
 									// Top right vertex exists
-									adjacency_information[c] = { g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] };
-									indices.insert(indices.end(), { c, g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][1], g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3], vertex_count });
+									m_indices.insert(m_indices.end(), { c, integrator_adjacency_information[4 * c + 1], vertex_count, integrator_adjacency_information[4 * c + 1], integrator_adjacency_information[4 * integrator_adjacency_information[4 * c + 1] + 3], vertex_count });
 									++vertex_count;
 									break;
-								case Cell_Type::Periodic:
+								case Cell_Type::Periodic_right:
 								case Cell_Type::Dirichlet_right:
 								case Cell_Type::Neumann_right:
 									// Top right vertex is missing
-									vertices.emplace_back(Vertex{ static_cast<float>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<float>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-									adjacency_information[c] = { g_waves.adjacency_information[c][1], vertex_count, vertex_count + 1 };
-									indices.insert(indices.end(), { c, g_waves.adjacency_information[c][1], vertex_count, g_waves.adjacency_information[c][1], vertex_count + 1, vertex_count });
+									m_vertices.emplace_back(Vertex{ static_cast<float>(integrator_position_information[2 * c + 0] + integrator.step_size_x),static_cast<float>(integrator_position_information[2 * c + 1] + integrator.step_size_y) });
+									switch (cell_type_y[integrator_adjacency_information[4 * c + 1]]) {
+										case Cell_Type::Periodic_right:
+											extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * integrator_adjacency_information[4 * c + 1] + 3]); // Copy infomation from periodic node of right cell.
+											break;
+										default:
+											extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 1]); // Copy information from main node of right cell.
+											break;
+									}
+									m_indices.insert(m_indices.end(), { c, integrator_adjacency_information[4 * c + 1], vertex_count, integrator_adjacency_information[4 * c + 1], vertex_count + 1, vertex_count });
 									vertex_count += 2;
 									break;
 								default:
 									throw std::runtime_error("Invalid cell type.");
 							}
+							break;
+						case Cell_Type::Dirichlet_right:
+						case Cell_Type::Neumann_right:
+							// This is a top boundary, so don't draw beyond it. We still need mesh_adjacency_information to be able to calculate the vertex normal though.
+							mesh_adjacency_information[c] = { integrator_adjacency_information[4 * c + 2], integrator_adjacency_information[4 * c + 1] }; // use cross(-b,a) instead of cross(a,b)
 							break;
 						default:
 							throw std::runtime_error("Invalid cell type.");
 					}
 					break;
-				case Cell_Type::Periodic:
-				case Cell_Type::Dirichlet_right:
-				case Cell_Type::Neumann_right:
+				case Cell_Type::Periodic_right:
 					// Right vertex is missing
-					vertices.emplace_back(Vertex{ static_cast<float>(g_waves.position_information[c][0] + g_waves.step_size_x), static_cast<float>(g_waves.position_information[c][1]) });
-					switch (g_waves.cells[c].cell_type.second) {
+					m_vertices.emplace_back(Vertex{ static_cast<float>(integrator_position_information[2 * c + 0] + integrator.step_size_x), static_cast<float>(integrator_position_information[2 * c + 1]) });
+					extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 1]); // Copy infomation from periodic node of this cell.
+					switch (cell_type_y[c]) {
 						case Cell_Type::Normal:
+						case Cell_Type::Periodic_left:
 						case Cell_Type::Dirichlet_left:
 						case Cell_Type::Neumann_left:
 							// Top vertex exists
-							switch (g_waves.cells[g_waves.adjacency_information[c][3]].cell_type.first) {
+							mesh_adjacency_information[c] = { vertex_count, integrator_adjacency_information[4 * c + 3] };
+							switch (cell_type_x[integrator_adjacency_information[4 * c + 3]]) {
 								case Cell_Type::Normal:
+								case Cell_Type::Periodic_left:
 								case Cell_Type::Dirichlet_left:
 								case Cell_Type::Neumann_left:
 									// Top right vertex exists
-									adjacency_information[c] = { vertex_count, g_waves.adjacency_information[c][3], g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1] };
-									indices.insert(indices.end(), { c, vertex_count, g_waves.adjacency_information[c][3], vertex_count, g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1], g_waves.adjacency_information[c][3] });
+									m_indices.insert(m_indices.end(), { c, vertex_count, integrator_adjacency_information[4 * c + 3], vertex_count, integrator_adjacency_information[4 * integrator_adjacency_information[4 * c + 3] + 1], integrator_adjacency_information[4 * c + 3] });
 									++vertex_count;
 									break;
-								case Cell_Type::Periodic:
+								case Cell_Type::Periodic_right:
 								case Cell_Type::Dirichlet_right:
 								case Cell_Type::Neumann_right:
 									// Top right vertex is missing
-									vertices.emplace_back(Vertex{ static_cast<float>(g_waves.position_information[c][0] + g_waves.step_size_x),static_cast<float>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-									adjacency_information[c] = { vertex_count, g_waves.adjacency_information[c][3], vertex_count + 1 };
-									indices.insert(indices.end(), { c, vertex_count, g_waves.adjacency_information[c][3], vertex_count, vertex_count + 1, g_waves.adjacency_information[c][3] });
+									m_vertices.emplace_back(Vertex{ static_cast<float>(integrator_position_information[2 * c + 0] + integrator.step_size_x),static_cast<float>(integrator_position_information[2 * c + 1] + integrator.step_size_y) });
+									switch (cell_type_x[integrator_adjacency_information[4 * c + 3]]) {
+										case Cell_Type::Periodic_right:
+											extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * integrator_adjacency_information[4 * c + 3] + 1]); // Copy infomation from periodic node of top cell.
+											break;
+										default:
+											extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 3]); // Copy information from main node of top cell.
+											break;
+									}
+									m_indices.insert(m_indices.end(), { c, vertex_count, integrator_adjacency_information[4 * c + 3], vertex_count, vertex_count + 1, integrator_adjacency_information[4 * c + 3] });
 									vertex_count += 2;
 									break;
 								default:
 									throw std::runtime_error("Invalid cell type.");
 							}
 							break;
-						case Cell_Type::Periodic:
+						case Cell_Type::Periodic_right:
 						case Cell_Type::Dirichlet_right:
 						case Cell_Type::Neumann_right:
 							// Top vertex is missing
-							vertices.emplace_back(Vertex{ static_cast<float>(g_waves.position_information[c][0]), static_cast<float>(g_waves.position_information[c][1] + g_waves.step_size_y) });
+							m_vertices.emplace_back(Vertex{ static_cast<float>(integrator_position_information[2 * c + 0]), static_cast<float>(integrator_position_information[2 * c + 1] + integrator.step_size_y) });
+							switch (cell_type_y[c]) {
+								case Cell_Type::Periodic_right:
+									extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 3]); // Copy infomation from main node of the periodic cell.
+									break;
+								default:
+									extra_vertices_duplicate_infomation.emplace_back(c); // Copy information from main node of this cell.
+									break;
+							}
+							mesh_adjacency_information[c] = { vertex_count, vertex_count + 1 };
 							// And hence, so is the top right vertex
-							vertices.emplace_back(Vertex{ static_cast<float>(g_waves.position_information[c][0] + g_waves.step_size_x), static_cast<float>(g_waves.position_information[c][1] + g_waves.step_size_y) });
-							adjacency_information[c] = { vertex_count, vertex_count + 1, vertex_count + 2 };
-							indices.insert(indices.end(), { c, vertex_count, vertex_count + 1, vertex_count, vertex_count + 2, vertex_count + 1 });
+							m_vertices.emplace_back(Vertex{ static_cast<float>(integrator_position_information[2 * c + 0] + integrator.step_size_x), static_cast<float>(integrator_position_information[2 * c + 1] + integrator.step_size_y) });
+							switch (((cell_type_x[c] == Cell_Type::Periodic_right) ? (1 << 0) : 0) + ((cell_type_y[c] == Cell_Type::Periodic_right) ? (1 << 1) : 0)) {
+								case 0: // Copy information from main node of this cell.
+									extra_vertices_duplicate_infomation.emplace_back(c);
+									break;
+								case (1 << 0): // Copy infomation from main node of the x-periodic cell.
+									extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 1]);
+									break;
+								case (1 << 1): // Copy infomation from main node of the y-periodic cell.
+									extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * c + 3]);
+									break;
+								case (1 << 0) + (1 << 1) : // Copy infomation from main node of the periodic [x2] cell.
+									extra_vertices_duplicate_infomation.emplace_back(integrator_adjacency_information[4 * integrator_adjacency_information[4 * c + 1] + 3]);
+									break;
+							}
+							m_indices.insert(m_indices.end(), { c, vertex_count, vertex_count + 1, vertex_count, vertex_count + 2, vertex_count + 1 });
 							vertex_count += 3;
 							break;
 						default:
 							throw std::runtime_error("Invalid cell type.");
+					}
+					break;
+				case Cell_Type::Dirichlet_right:
+				case Cell_Type::Neumann_right:
+					switch (cell_type_y[c]) { // This is a right boundary, so don't draw beyond it. We still need mesh_adjacency_information to be able to calculate the vertex normal though.
+						case Cell_Type::Normal:
+						case Cell_Type::Periodic_left:
+						case Cell_Type::Periodic_right:
+						case Cell_Type::Dirichlet_left:
+						case Cell_Type::Neumann_left:
+							mesh_adjacency_information[c] = { integrator_adjacency_information[4 * c + 3], integrator_adjacency_information[4 * c + 0] };
+							break;
+						default:
+							mesh_adjacency_information[c] = { integrator_adjacency_information[4 * c + 0], integrator_adjacency_information[4 * c + 2] };
+							break;
 					}
 					break;
 				default:
@@ -135,60 +214,120 @@ namespace Waves {
 			}
 		}
 
-		// Calculate surface heights and normals.
-		update_surface_mesh();
+		// Copy duplicate and adjacency information to the compute device
+		m_duplicate_information = boost::compute::vector<cl_uint>(extra_vertices_duplicate_infomation.size(), integrator.m_context);
+		boost::compute::copy(extra_vertices_duplicate_infomation.begin(), extra_vertices_duplicate_infomation.end(), m_duplicate_information.begin(), integrator.m_queue);
+		[&]() {
+			std::vector<cl_uint> tmp; // boost.compute doesn't like copying from std::array
+			for (auto a : mesh_adjacency_information)
+				tmp.insert(tmp.end(), a.begin(), a.end());
+			m_adjacency_information = boost::compute::vector<cl_uint>(tmp.size(), integrator.m_context);
+			boost::compute::copy(tmp.begin(), tmp.end(), m_adjacency_information.begin(), integrator.m_queue);
+		}();
 	}
 
-	// Update the Vertex data based on the updated values of the integrator g_waves.
-	void Mesh::update_surface_mesh()
+	// Update the Vertex data based on the updated values of the integrator integrator.
+	void Mesh::update_surface_mesh(Integrator & integrator)
 	{
+		// Copy from device back to host
+		std::vector<integrator_precision> U(integrator.num_cells);
+		boost::compute::copy(integrator.U.begin(), integrator.U.end(), U.begin(), integrator.m_queue);
+
 		// Copy heights
-#pragma omp parallel for
-		for (int c = 0; c < g_waves.cells.size(); ++c)
-			vertices[c].position[2] = g_waves.cells[c].U[0];
-
-		//std::for_each(
-		//	boost::make_zip_iterator(boost::make_tuple(vertices.begin(), g_waves.cells.begin())),
-		//	boost::make_zip_iterator(boost::make_tuple(vertices.end(), g_waves.cells.end())),
-		//	[](boost::tuple<std::vector<Waves::Vertex>::iterator, std::vector<Waves::Cell>::iterator> zip_it) { (*(zip_it.get<0>())).position[2] = (*(zip_it.get<1>())).U[0]; }
-		//);
-
-		// Copy periodic cells
-#pragma omp parallel for
-		for (int c = 0; c < g_waves.cells.size(); ++c) {
-		//std::for_each(boost::make_zip_iterator(boost::make_tuple()),, []() {
-			if (g_waves.cells[c].cell_type.first == Cell_Type::Periodic) {
-				vertices[adjacency_information[c][0]].position[2] = vertices[g_waves.adjacency_information[c][1]].position[2];
-				assert(g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3] != missing_index); // assert that the top right vertex exists
-				vertices[adjacency_information[c][2]].position[2] = vertices[g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3]].position[2];
-			}
-			if (g_waves.cells[c].cell_type.second == Cell_Type::Periodic) {
-				vertices[adjacency_information[c][1]].position[2] = vertices[g_waves.adjacency_information[c][3]].position[2];
-				assert(g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1] != missing_index); // assert that the top right vertex exists
-				vertices[adjacency_information[c][2]].position[2] = vertices[g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1]].position[2];
-			}
-		//});
-		}
+		for (cl_uint c = 0; c < integrator.num_cells; ++c)
+			m_vertices[c].position[2] = static_cast<float>(U[c*integrator.nodes_per_cell]);
+		for (cl_uint c = 0; c < extra_vertices_duplicate_infomation.size(); ++c)
+			m_vertices[integrator.num_cells + c].position[2] = m_vertices[extra_vertices_duplicate_infomation[c]].position[2];
 
 		// Calculate normals
-#pragma omp parallel for
-		for (int c = 0; c < g_waves.cells.size(); ++c) {
-			QVector3D u = { vertices[adjacency_information[c][0]].position[0] - vertices[c].position[0],vertices[adjacency_information[c][0]].position[1] - vertices[c].position[1], vertices[adjacency_information[c][0]].position[2] - vertices[c].position[2] };
-			QVector3D v = { vertices[adjacency_information[c][1]].position[0] - vertices[c].position[0],vertices[adjacency_information[c][1]].position[1] - vertices[c].position[1], vertices[adjacency_information[c][1]].position[2] - vertices[c].position[2] };
-			vertices[c].normal = QVector3D::normal(u, v);
+		for (cl_uint c = 0; c < integrator.num_cells; ++c) {
+			auto u = m_vertices[mesh_adjacency_information[c][0]].position - m_vertices[c].position;
+			auto v = m_vertices[mesh_adjacency_information[c][1]].position - m_vertices[c].position;
+			m_vertices[c].normal = QVector3D::normal(u, v);
+		}
+		for (cl_uint c = 0; c < extra_vertices_duplicate_infomation.size(); ++c)
+			m_vertices[integrator.num_cells + c].normal = m_vertices[extra_vertices_duplicate_infomation[c]].normal;
+	}
+
+	// Generate OpenCL kernel for copying the vertex data from the main nodes of the integrator into the position[2] component of the vertices on the device, then calculate normals and account for periodicity.
+	void Mesh::generate_mesh_update_kernel(Integrator & integrator) {
+		const char source[] = BOOST_COMPUTE_STRINGIZE_SOURCE(
+			typedef float integrator_precision; // The precision used by the integrator. This must be set here, in integratorCL.h and in Integrator::generate_kernels.
+		typedef struct tag_Vertex { // This should be the C99 equivalent of the relevant components of the Vertex class in vertex.h
+			float position[3]; // Note: we can't use float3's or float4's here as the compiler promotes *everything* to float4's, which doesn't line up with the contents of the vertex_buffer
+			float normal[3];
+			float shininess;
+			float specular[4];
+		} Vertex;
+
+		__kernel void copy_heights(__global Vertex *vertex_buffer, __global const integrator_precision *U, unsigned int nodes_per_cell) {
+			size_t cell = get_global_id(0);
+
+			// Copy surface heights
+			vertex_buffer[cell].position[2] = (float)U[cell*nodes_per_cell];
 		}
 
-		// Copy periodic cells
-#pragma omp parallel for
-		for (int c = 0; c < g_waves.cells.size(); ++c) {
-			if (g_waves.cells[c].cell_type.first == Cell_Type::Periodic) {
-				vertices[adjacency_information[c][0]].normal = vertices[g_waves.adjacency_information[c][1]].normal;
-				vertices[adjacency_information[c][2]].normal = vertices[g_waves.adjacency_information[g_waves.adjacency_information[c][1]][3]].normal;
-			}
-			if (g_waves.cells[c].cell_type.second == Cell_Type::Periodic) {
-				vertices[adjacency_information[c][1]].normal = vertices[g_waves.adjacency_information[c][3]].normal;
-				vertices[adjacency_information[c][2]].normal = vertices[g_waves.adjacency_information[g_waves.adjacency_information[c][3]][1]].normal;
-			}
+		__kernel void calculate_normals(__global Vertex *vertex_buffer, __global const unsigned int *adjacency_information) {
+			size_t vertex = get_global_id(0);
+
+			// Calculate normals
+			float3 v1 = (float3)(vertex_buffer[adjacency_information[2 * vertex + 0]].position[0] - vertex_buffer[vertex].position[0], vertex_buffer[adjacency_information[2 * vertex + 0]].position[1] - vertex_buffer[vertex].position[1], vertex_buffer[adjacency_information[2 * vertex + 0]].position[2] - vertex_buffer[vertex].position[2]);
+			float3 v2 = (float3)(vertex_buffer[adjacency_information[2 * vertex + 1]].position[0] - vertex_buffer[vertex].position[0], vertex_buffer[adjacency_information[2 * vertex + 1]].position[1] - vertex_buffer[vertex].position[1], vertex_buffer[adjacency_information[2 * vertex + 1]].position[2] - vertex_buffer[vertex].position[2]);
+			float3 n = fast_normalize(cross(v1, v2));
+			vertex_buffer[vertex].normal[0] = n.x;
+			vertex_buffer[vertex].normal[1] = n.y;
+			vertex_buffer[vertex].normal[2] = n.z;
 		}
+
+		__kernel void copy_duplicate_heights(__global Vertex *vertex_buffer, __global const unsigned int *duplicate_information, unsigned int offset) {
+			size_t vertex = get_global_id(0);
+
+			// Copy heights
+			vertex_buffer[vertex + offset].position[2] = vertex_buffer[duplicate_information[vertex]].position[2];
+
+		}
+
+		__kernel void copy_duplicate_normals(__global Vertex *vertex_buffer, __global const unsigned int *duplicate_information, unsigned int offset) {
+			size_t vertex = get_global_id(0);
+
+			// Copy normals
+			vertex_buffer[vertex + offset].normal[0] = vertex_buffer[duplicate_information[vertex]].normal[0];
+			vertex_buffer[vertex + offset].normal[1] = vertex_buffer[duplicate_information[vertex]].normal[1];
+			vertex_buffer[vertex + offset].normal[2] = vertex_buffer[duplicate_information[vertex]].normal[2];
+		}
+		);
+		auto program = boost::compute::program::build_with_source(source, integrator.m_context);
+		m_kernel_copy_heights = program.create_kernel("copy_heights");
+		m_kernel_calculate_normals = program.create_kernel("calculate_normals");
+		m_kernel_copy_duplicate_heights = program.create_kernel("copy_duplicate_heights");
+		m_kernel_copy_duplicate_normals = program.create_kernel("copy_duplicate_normals");
+	}
+
+	// Set the kernel arguments. This should be called whenever the vertex_buffer and integrator.U are structurally changed (resized, moved, etc.)
+	void Mesh::configure_mesh_update_kernel(Integrator & integrator, QOpenGLBuffer & vertex_buffer) {
+		m_vertex_buffer = boost::compute::opengl_buffer(integrator.m_context, vertex_buffer.bufferId(), CL_MEM_WRITE_ONLY);
+		m_kernel_copy_heights.set_args(m_vertex_buffer, integrator.U.get_buffer(), integrator.nodes_per_cell);
+		m_kernel_calculate_normals.set_args(m_vertex_buffer, m_adjacency_information.get_buffer());
+		m_kernel_copy_duplicate_heights.set_args(m_vertex_buffer, m_duplicate_information.get_buffer(), integrator.num_cells);
+		m_kernel_copy_duplicate_normals.set_args(m_vertex_buffer, m_duplicate_information.get_buffer(), integrator.num_cells);
+	}
+
+	// Update the surface mesh directly on the device
+	void Mesh::update_surface_mesh_CL(Integrator &integrator) {
+		// acquire the buffer so that it is accessible to OpenCL
+		glFinish();
+		boost::compute::opengl_enqueue_acquire_buffer(m_vertex_buffer, integrator.m_queue);
+
+		// Update the vertex buffer
+		integrator.m_queue.enqueue_1d_range_kernel(m_kernel_copy_heights, 0, integrator.num_cells, 0);
+		if (extra_vertices_duplicate_infomation.size() != 0) // Cannot enqueue a kernel with 0 global work size
+			integrator.m_queue.enqueue_1d_range_kernel(m_kernel_copy_duplicate_heights, 0, extra_vertices_duplicate_infomation.size(), 0);
+		integrator.m_queue.enqueue_1d_range_kernel(m_kernel_calculate_normals, 0, integrator.num_cells, 0);
+		if (extra_vertices_duplicate_infomation.size() != 0) // Cannot enqueue a kernel with 0 global work size
+			integrator.m_queue.enqueue_1d_range_kernel(m_kernel_copy_duplicate_normals, 0, extra_vertices_duplicate_infomation.size(), 0);
+
+		// release the buffer so that it is accessible to OpenGL
+		clFinish(integrator.m_queue);
+		boost::compute::opengl_enqueue_release_buffer(m_vertex_buffer, integrator.m_queue);
 	}
 }

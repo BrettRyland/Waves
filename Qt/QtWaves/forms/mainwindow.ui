@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>930</width>
-    <height>632</height>
+    <width>1024</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -55,35 +55,173 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QPushButton" name="ICButton">
-        <property name="text">
-         <string>Initial Condition</string>
+       <widget class="QComboBox" name="IC_comboBox">
+        <property name="toolTip">
+         <string>Initial conditions</string>
         </property>
+        <property name="statusTip">
+         <string/>
+        </property>
+        <property name="whatsThis">
+         <string>Initial conditions</string>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>Single frequency</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Continuous spectrum</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Localised hump</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Two localised humps</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Off-centre localised hump</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>A localised wave</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="BCButton">
-        <property name="text">
-         <string>Boundary Condition</string>
+       <widget class="QComboBox" name="BC_comboBox">
+        <property name="toolTip">
+         <string>Boundary Conditions</string>
         </property>
+        <property name="whatsThis">
+         <string>Boundary Conditions</string>
+        </property>
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <item>
+         <property name="text">
+          <string>Periodic square</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Dirichlet, square</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Dirichlet, circle</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Dirichlet, circle with a cusp</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Dirichlet, intersecting circles</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Double slit (mixed BCs)</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pauseButton">
+       <widget class="QPushButton" name="pause_Button">
         <property name="text">
          <string>Pause</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="fullscreenButton">
+       <widget class="QDoubleSpinBox" name="timestep_doubleSpinBox">
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="prefix">
+         <string>Timestep: </string>
+        </property>
+        <property name="suffix">
+         <string>s</string>
+        </property>
+        <property name="decimals">
+         <number>4</number>
+        </property>
+        <property name="minimum">
+         <double>0.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.000100000000000</double>
+        </property>
+        <property name="value">
+         <double>0.016700000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="time_lineEdit">
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="placeholderText">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="dissipation_doubleSpinBox">
+        <property name="toolTip">
+         <string>Artificial dissipation</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="prefix">
+         <string>Dissipation factor: </string>
+        </property>
+        <property name="decimals">
+         <number>3</number>
+        </property>
+        <property name="maximum">
+         <double>1.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="fullscreen_Button">
         <property name="text">
          <string>Fullscreen</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="resetviewButton">
+       <widget class="QPushButton" name="reset_view_Button">
         <property name="text">
          <string>Reset view</string>
         </property>
@@ -103,7 +241,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="quitButton">
+       <widget class="QPushButton" name="quit_Button">
         <property name="text">
          <string>Quit</string>
         </property>

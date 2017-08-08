@@ -4,15 +4,15 @@
 
 TEMPLATE = app
 TARGET = QtWaves
-DESTDIR = ../../Win32/Release
 QT += core widgets gui
 CONFIG += release console
 DEFINES += QT_DLL QT_WIDGETS_LIB
 INCLUDEPATH += ./GeneratedFiles \
     . \
     ./GeneratedFiles/Release \
-    $(ProjectDir)/include \
-    $(ProjectDir)/../../include
+    include \
+    ../../include \
+    /home/brett/Programming/main-repo/include
 DEPENDPATH += .
 MOC_DIR += ./GeneratedFiles/release
 OBJECTS_DIR += release
