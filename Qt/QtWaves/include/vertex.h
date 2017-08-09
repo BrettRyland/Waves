@@ -5,8 +5,8 @@
 #include <QVector4D>
 
 namespace Waves {
-	/** A class containing the vertex information the OpenGL requires
-	@note If this class is changed, then the relevant changes must be propagated to the OpenCL kernel in mesh.cpp
+	/** A class containing the vertex information that OpenGL requires.
+	@note If this class is changed, then the relevant changes must be propagated to the OpenCL kernel in mesh.cl.
 	*/
 	class Vertex
 	{

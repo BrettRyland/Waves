@@ -56,6 +56,8 @@ namespace Waves {
 
 	// Define and compile the kernels required for the simulation
 	void Integrator::generate_kernels() {
+#include "kernels/integrator.cl"
+		/*
 		const char step_source[] = BOOST_COMPUTE_STRINGIZE_SOURCE(
 			typedef float integrator_precision; // The precision used by the integrator. This must be set here, in integratorCL.h and in Mesh::generate_mesh_update_kernel.
 		typedef enum { Normal, Periodic_left, Periodic_right, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right } Cell_Type; // This should actually by unsigned to match the definition in integratorCL.h, but the number of types is small enough to not be an issue
@@ -77,9 +79,8 @@ namespace Waves {
 					V[cell*nodes_per_cell + node] += dt * (wavespeed * (U_xx[cell*nodes_per_cell + node] + U_yy[cell*nodes_per_cell + node]) - derivative_of_the_potential(U[cell*nodes_per_cell + node]));
 		}
 
-		/* A custom "inner product" on first and second that operates over count values with a custom start and step size for each vector and a given initial value.
-		Note: no bounds checking.
-		 */
+		// A custom "inner product" on first and second that operates over count values with a custom start and step size for each vector and a given initial value.
+		// Note: no bounds checking.
 		inline integrator_precision inner_product_n(__global const integrator_precision *first, size_t start1, int step1, __global const integrator_precision* second, size_t start2, int step2, int count, integrator_precision initial_value) {
 			for (int n = 0; n != count; ++n, start1 += step1, start2 += step2)
 				initial_value += first[start1] * second[start2];
@@ -180,6 +181,7 @@ namespace Waves {
 			}
 		}
 		);
+		*/
 
 		auto step_program = boost::compute::program::build_with_source(step_source, m_context);
 		kernel_step_U = step_program.create_kernel("step_U");

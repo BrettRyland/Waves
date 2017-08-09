@@ -4,13 +4,7 @@
 #include <vector>
 #include <array>
 #include <iostream>
-
-#define BOOST_COMPUTE_USE_OFFLINE_CACHE
-//#define BOOST_COMPUTE_HAVE_THREAD_LOCAL
-//#define BOOST_COMPUTE_THREAD_SAFE
-#define BOOST_COMPUTE_DEBUG_KERNEL_COMPILATION
-// The above #defines need to be defined before including boost.compute, so include this file before any other boost.compute includes.
-#include <boost/compute.hpp>
+#include "boost_compute.h"
 
 /** Our base namespace for the wave simulation
 @note: we use cl_uint for indexing throughout as that is the type we're passing to glDrawElements in OGLWidget::paintGL()
@@ -25,7 +19,7 @@ namespace Waves {
 		Neumann_left    5 = Main node uses phantom points on the left in computations, other nodes are normal.
 		Neumann_right   6 = Main node uses phantom points on the right in computations, other nodes are outside the domain.
 
-		Note: we can't make this an enum class due to interoperability issues with boost.compute.
+		Note: we can't make this an enum class due to interoperability issues with boost.compute. Also, changes made here must be mirrored in the C99 version in integrator.cl.
 	*/
 	enum Cell_Type :cl_uint { Normal, Periodic_left, Periodic_right, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right };
 	const cl_uint cell_type_count = 7; ///< The number of different cell types in the enum

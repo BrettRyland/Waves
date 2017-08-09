@@ -251,6 +251,8 @@ namespace Waves {
 
 	// Generate OpenCL kernel for copying the vertex data from the main nodes of the integrator into the position[2] component of the vertices on the device, then calculate normals and account for periodicity.
 	void Mesh::generate_mesh_update_kernel(Integrator & integrator) {
+#include "kernels/mesh.cl"
+		/*
 		const char source[] = BOOST_COMPUTE_STRINGIZE_SOURCE(
 			typedef float integrator_precision; // The precision used by the integrator. This must be set here, in integratorCL.h and in Integrator::generate_kernels.
 		typedef struct tag_Vertex { // This should be the C99 equivalent of the relevant components of the Vertex class in vertex.h
@@ -296,6 +298,7 @@ namespace Waves {
 			vertex_buffer[vertex + offset].normal[2] = vertex_buffer[duplicate_information[vertex]].normal[2];
 		}
 		);
+		*/
 		auto program = boost::compute::program::build_with_source(source, integrator.m_context);
 		m_kernel_copy_heights = program.create_kernel("copy_heights");
 		m_kernel_calculate_normals = program.create_kernel("calculate_normals");

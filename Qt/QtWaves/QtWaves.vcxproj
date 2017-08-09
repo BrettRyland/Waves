@@ -236,6 +236,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\integratorCL.h" />
+    <ClInclude Include="include\boost_compute.h" />
     <CustomBuild Include="include/integrator_wrapper.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Moc%27ing integrator_wrapper.h...</Message>
@@ -332,6 +333,8 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\qrc_%(Filename).cpp;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\rcc.exe" -name "%(Filename)" -no-compress "%(FullPath)" -o .\GeneratedFiles\qrc_%(Filename).cpp</Command>
     </CustomBuild>
+    <None Include="kernels\integrator.cl" />
+    <None Include="kernels\mesh.cl" />
     <None Include="packages.config" />
     <None Include="shaders\surface.frag.glsl">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>

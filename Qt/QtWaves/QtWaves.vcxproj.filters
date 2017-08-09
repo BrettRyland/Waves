@@ -36,6 +36,9 @@
     <Filter Include="Resource Files\shaders">
       <UniqueIdentifier>{e6c37e1e-be32-4038-8040-4592ffbfb83d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\OpenCL kernels">
+      <UniqueIdentifier>{9ae9e7c9-6927-4433-812e-ef4f9406bdfc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\Debug\moc_mainwindow.cpp">
@@ -114,6 +117,9 @@
     <ClInclude Include="include\integratorCL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\boost_compute.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -122,6 +128,12 @@
     </None>
     <None Include="shaders\surface.frag.glsl">
       <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="kernels\integrator.cl">
+      <Filter>Resource Files\OpenCL kernels</Filter>
+    </None>
+    <None Include="kernels\mesh.cl">
+      <Filter>Resource Files\OpenCL kernels</Filter>
     </None>
   </ItemGroup>
 </Project>
