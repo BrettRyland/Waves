@@ -1,12 +1,10 @@
-#pragma once
-#include "boost_compute.h"
+// The precision used by the integrator. This must be set in all .cl files to mirror that in integratorCL.h.
+typedef float integrator_precision;
 
-const char step_source[] = BOOST_COMPUTE_STRINGIZE_SOURCE(
+// This should actually by unsigned to match the definition in integratorCL.h, but C99 doesn't allow this. Fortunately, the number of types is small enough to not be an issue.
+typedef enum { Normal, Periodic_left, Periodic_right, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right } Cell_Type;
 
-	typedef float integrator_precision; // The precision used by the integrator. This must be set in all .cl files to mirror that in integratorCL.h.
-
-typedef enum { Normal, Periodic_left, Periodic_right, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right } Cell_Type; // This should actually by unsigned to match the definition in integratorCL.h, but C99 doesn't allow this. Fortunately, the number of types is small enough to not be an issue.
-
+// Perform a step of size dt in the U variable
 __kernel void step_U(__global integrator_precision *U, __global const unsigned int *masks, __global const integrator_precision *V, __global const unsigned int *cell_type_x, __global const unsigned int *cell_type_y, unsigned int cell_type_count, unsigned int nodes_per_cell, integrator_precision dt) {
 	size_t cell = get_global_id(0);
 	for (unsigned int node = 0; node != nodes_per_cell; ++node)
@@ -16,7 +14,10 @@ __kernel void step_U(__global integrator_precision *U, __global const unsigned i
 		}
 }
 
-inline integrator_precision derivative_of_the_potential(integrator_precision u) { return 2.0 * u + 4.0 * u * u * u; } // V'(u)=2*u+4*u^3
+// V'(u)=2*u+4*u^3
+inline integrator_precision derivative_of_the_potential(integrator_precision u) { return 2.0 * u + 4.0 * u * u * u; }
+
+// Perform a step of size dt in the V variable
 __kernel void step_V(__global integrator_precision *V, __global const unsigned int *masks, __global const integrator_precision *U, __global const integrator_precision *U_xx, __global const integrator_precision *U_yy, __global const unsigned int *cell_type_x, __global const unsigned int *cell_type_y, unsigned int cell_type_count, unsigned int nodes_per_cell, integrator_precision dt, integrator_precision wavespeed) {
 	size_t cell = get_global_id(0);
 	for (unsigned int node = 0; node != nodes_per_cell; ++node)
@@ -125,4 +126,3 @@ __kernel void compute_U_yy(__global integrator_precision *U_yy, __global const i
 		}
 	}
 }
-);

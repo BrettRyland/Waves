@@ -305,3 +305,6 @@ documentation/html/annotated.html
 
 # doxygen
 html/
+
+# mercurial
+.hg*

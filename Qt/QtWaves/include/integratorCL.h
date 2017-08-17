@@ -32,30 +32,30 @@ namespace Waves {
 	class Integrator
 	{ // Functions and variables related to the PDE and integrator.
 	private:
+		/** @name Compute device context and queue
+		*/
 		boost::compute::context m_context; ///< The context of the compute device
 		boost::compute::command_queue m_queue; ///< The queue associated with the context
-		/** @name Core variables.
+		///@}
+
+		/** @name Core integrator components
 		These are the main variables used in the simulation (PDE).
-		Size of U, V, U_xx and U_yy are stages_x*stages_y*number of "cells"
+		Size of U, V, U_xx and U_yy are stages_x*stages_y*num_cells
 		@{*/
 		boost::compute::vector<integrator_precision> U, ///< Surface height
 			V, ///< dU/dt
 			U_xx, ///< d^2U/dx^2
 			U_yy; ///< d^2U/dy^2
+		void update_U_dependent_variables(); ///< Update the U-dependent variables
+		void update_V_dependent_variables(); ///< Update the V-dependent variables
 		///@}
-		boost::compute::vector<cl_uint> adjacency_information; ///< Adjacency information of each cell (left, right, down, up quadruplets). missing_index indicates no adjacent cell (i.e. for boundary cells)
-		//boost::compute::vector<integrator_precision> position_information; ///< Absolute position (x,y pairs) of the lower left corner of each cell
-		boost::compute::vector<cl_uint> masks; ///< An update mask dependent on the type of cell. Note: we can't use bool as the underlying type due to opencl issues with bools.
-		boost::compute::vector<cl_uint> cell_type_x, ///< Cell type in the x direction
-			cell_type_y; ///< Cell type in the y direction
-		std::vector<cl_uint> host_cell_type_x, ///< Host copy of cell_type_x
-			host_cell_type_y; ///< Host copy of cell_type_y
-		std::vector<cl_uint> host_adjacency_information; ///< Host copy of adjacency_information
-		std::vector<integrator_precision> host_position_information; ///< Host copy of position_information
+
+		/** @name Integrator control variables
+		@{*/
 		cl_uint num_cells; ///< The number of cells in the simulation
-		cl_uint nodes_per_cell, ///< The number of nodes per cell (rx-1)*(ry-1)
-			stages_x, ///< Number of stages per cell in the x direction
-			stages_y; ///< Number of stages per cell in the y direction
+		cl_uint stages_x, ///< Number of stages per cell in the x direction
+			stages_y, ///< Number of stages per cell in the y direction
+			nodes_per_cell; ///< The number of nodes per cell (rx-1)*(ry-1)
 		integrator_precision time, ///< Time the system has evolved for.
 			step_size_time, ///< Step size in time
 			step_size_x, ///< Step size in the x direction
@@ -63,8 +63,25 @@ namespace Waves {
 			wave_speed; ///< Wave speed
 		int initial_conditions; ///< Initial conditions indicator
 		int boundary_conditions; ///< Boudary conditions indicator
+		integrator_precision m_artificial_dissipation{ 0.0 }; ///< Artificial dissipation amount (default: 0.0 = no dissipation). Anything other than 0.0 breaks multisymplecticity and most likely stability of time integrator. Note: currently not enabled.
+		///@}
 
-		integrator_precision m_artificial_dissipation{ 0.0 }; ///< Artificial dissipation amount (default: 0.0 = no dissipation). Anything other than 0.0 breaks multisymplecticity and most likely stability of time integrator
+		/** @name Integrator structural components
+		Adjacency information, position information, cell types, update masks.
+		@{*/
+		boost::compute::vector<cl_uint> adjacency_information; ///< Adjacency information of each cell (left, right, down, up quadruplets). missing_index indicates no adjacent cell (i.e. for boundary cells)
+		std::vector<cl_uint> host_adjacency_information; ///< Host copy of adjacency_information
+		boost::compute::vector<cl_uint> masks; ///< An update mask dependent on the type of cell. Note: we can't use bool as the underlying type due to opencl issues with bools.
+		void generate_update_masks(); ///< Generate the update masks (different cell types only update certain nodes in the cell)
+		boost::compute::vector<cl_uint> cell_type_x, ///< Cell type in the x direction
+			cell_type_y; ///< Cell type in the y direction
+		std::vector<cl_uint> host_cell_type_x, ///< Host copy of cell_type_x
+			host_cell_type_y; ///< Host copy of cell_type_y
+		//boost::compute::vector<integrator_precision> position_information; ///< Absolute position (x,y pairs) of the lower left corner of each cell
+		std::vector<integrator_precision> host_position_information; ///< Host copy of position_information
+		std::tuple<std::vector<cl_uint>, std::vector<cl_uint>, std::vector<cl_uint>> find_neighbours(std::vector<integrator_precision> const& position_information); ///< Helper function for constructing boundary conditions
+		std::array<integrator_precision, 2> domain_scaling_factor; ///< A scaling factor to get the graphics in the right place
+		///@}
 
 		/** @name Stencils
 		@{*/
@@ -97,17 +114,16 @@ namespace Waves {
 		void configure_kernels_static_vars(std::vector<cl_uint> const& host_cell_type_x, std::vector<cl_uint> const& host_cell_type_y, std::vector<cl_uint> const& host_adjacency_information, std::vector<integrator_precision> const& host_position_information); ///< Update the kernel configuration (arguments) whenever the structure of the simulation is changed. E.g. a change in boundary conditions.
 		void configure_kernels_dynamic_vars(std::vector<integrator_precision> const& host_U, std::vector<integrator_precision> const& host_V); ///< Update the kernel dynamic variables (arguments). E.g. a change in initial conditions.
 		///@}
-		void generate_update_masks(); ///< Generate the update masks (different cell types only update certain nodes in the cell)
-		void update_U_dependent_variables(); ///< Update the U-dependent variables
-		void update_V_dependent_variables(); ///< Update the V-dependent variables
-
-		std::array<integrator_precision, 2> domain_scaling_factor; ///< A scaling factor to get the graphics in the right place
-		std::tuple<std::vector<cl_uint>, std::vector<cl_uint>, std::vector<cl_uint>> find_neighbours(std::vector<integrator_precision> const& position_information); ///< Helper function for constructing boundary conditions
 
 	public:
+		/** @name Core integrator methods
+		@{*/
 		void step(); ///< Step forwards in time, i.e., the integrator
 		void half_step(); ///< Perform an initial half-step in V to optimise the leapfrog algorithm
+		///@}
 
+		/** @name Integrator configuration
+		@{*/
 		/** Initialise the Integrator.
 		@param rx is the number of stages in the x direction
 		@param ry is the number of stages in the y direction
@@ -118,28 +134,29 @@ namespace Waves {
 		@param queue is the queue associated with the shared_context
 		*/
 		void initialise(int rx, int ry, integrator_precision dt, int ic, int bc, boost::compute::context &shared_context, boost::compute::command_queue &queue);
-
-		void reset_initial_conditiones() { change_initial_conditions(initial_conditions); } ///< Reset the simulation to the current initial conditions
-		void change_initial_conditions(int ic = -1); ///< Defaults to switching to the next initial condition
 		void change_boundary_conditions(int bc = -1); ///< Defaults to switching to the next initial condition. Also resets the initial conditions and returns the initial conditions hint.
-
-		/** Accessors
-		@{*/
+		void change_initial_conditions(int ic = -1); ///< Defaults to switching to the next initial condition
+		void reset_initial_conditiones() { change_initial_conditions(initial_conditions); } ///< Reset the simulation to the current initial conditions
+		void change_time_step(integrator_precision dt) { step_size_time = dt; kernel_step_U.set_arg(7, step_size_time); kernel_step_V.set_arg(9, step_size_time); } ///< Change the time step of the integrator
 		void set_artificial_dissipation(integrator_precision value) { m_artificial_dissipation = value /*std::clamp(value, 0.0, 1.0) std::clamp is not part of gcc-6 in linux*/; }  ///< Set the amount of artificial dissipation in the integrator
+		///@}
+
+		/** @name Accessors
+		@{*/
 		auto get_IC() const { return initial_conditions; } ///< Get the current initial conditions
 		auto get_BC() const { return boundary_conditions; } ///< Get the current boundary conditions
-		void change_time_step(integrator_precision dt) { step_size_time = dt; kernel_step_U.set_arg(7, step_size_time); kernel_step_V.set_arg(9, step_size_time); } ///< Change the time step of the integrator
 		auto get_time_step() const { return step_size_time; } ///< Get the current time step of the integrator
 		auto get_time() const { return time; } ///< Get the current time reported by the integrator
 		auto get_number_of_cells() const { return num_cells; } ///< Get the number of cells in the simulation
 		///@}
+
 		/** @name Device to host accessors
 		@note The cell types returned are vectors of cl_uint instead of Cell_Type due to copying from the device not allowing direct copying to type Cell_Type
 		@{*/
-		//auto get_position_information()->std::vector<integrator_precision>; ///< Get the position information
-		auto get_adjacency_information()->std::vector<cl_uint>; ///< Get the adjacency information
 		auto get_cell_type_x()->std::vector<cl_uint>; ///< Get the cell types in the x-direction
 		auto get_cell_type_y()->std::vector<cl_uint>; ///< Get the cell types in the y-direction
+		//auto get_position_information()->std::vector<integrator_precision>; ///< Get the position information
+		auto get_adjacency_information()->std::vector<cl_uint>; ///< Get the adjacency information
 		///@}
 
 		/// Friendly ostream operator<<

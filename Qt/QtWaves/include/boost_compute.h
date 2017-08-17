@@ -1,4 +1,5 @@
 #pragma once
+///@file
 
 #define BOOST_COMPUTE_USE_OFFLINE_CACHE
 //#define BOOST_COMPUTE_HAVE_THREAD_LOCAL
