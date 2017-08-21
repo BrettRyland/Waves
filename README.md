@@ -1,6 +1,6 @@
 # Waves
 Wave simulator for the nonlinear wave equation, u_tt=c^2*(u_xx+u_yy)-V'(u), using Lobatto IIIA-IIIB discretisation in space (with 2, 3, or 4 stages for now) to get explicit ODEs in time (see my PhD thesis or Section 3 of https://doi.org/10.1137/140958050 for details), which are then integrated using leapfrog to get a high-order fully explicit multisymplectic integrator.
-The observed numerical order in space for an r-stage discretisation is 2 for r=2 or r+1 for r>2, while the order in time is 2 for leapfrog (other time-stepping methods may give higher order in time).
+The observed global numerical order in space for an r-stage discretisation is 2 for r=2 or r+1 for r>2, while the order in time is 2 for leapfrog (other time-stepping methods may give higher order in time).
 Additionally, the explicit ODEs are local (only depending on neighbouring cells), which allows various boundary conditions to be handled simply.
 
 A Qt frontend to the integrator can be found in the Qt folder.
