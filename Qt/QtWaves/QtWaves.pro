@@ -1,8 +1,9 @@
 TEMPLATE = app
 TARGET = QtWaves
 QT += core widgets gui
-CONFIG += debug console
-DEFINES += QT_DLL QT_WIDGETS_LIB
+CONFIG += release console optimize_full
+DEFINES += QT_DLL QT_WIDGETS_LIB CL_TARGET_OPENCL_VERSION=220
+QMAKE_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 INCLUDEPATH += ./GeneratedFiles \
     . \
     ./GeneratedFiles/Release \

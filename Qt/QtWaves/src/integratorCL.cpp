@@ -111,17 +111,17 @@ namespace Waves {
 					case Cell_Type::Neumann_left:
 						break;
 					case Cell_Type::Neumann_right:
-						for (auto ndx = 0, i = 0; ndx != nodes_per_cell; ++ndx, ++i)
+						for (cl_uint ndx = 0, i = 0; ndx != nodes_per_cell; ++ndx, ++i)
 							if (i % stages_x != 0)
 								host_masks[cell_type + ndx] = 0;
 						break;
 					case Cell_Type::Dirichlet_left:
-						for (auto ndx = 0, i = 0; ndx != nodes_per_cell; ++ndx, ++i)
+						for (cl_uint ndx = 0, i = 0; ndx != nodes_per_cell; ++ndx, ++i)
 							if (i % stages_x == 0)
 								host_masks[cell_type + ndx] = 0;
 						break;
 					case Cell_Type::Dirichlet_right:
-						for (auto ndx = 0; ndx != nodes_per_cell; ++ndx)
+						for (cl_uint ndx = 0; ndx != nodes_per_cell; ++ndx)
 							host_masks[cell_type + ndx] = 0;
 						break;
 					default:
@@ -134,15 +134,15 @@ namespace Waves {
 					case Cell_Type::Neumann_left:
 						break;
 					case Cell_Type::Neumann_right:
-						for (auto ndx = stages_x; ndx != nodes_per_cell; ++ndx)
+						for (cl_uint ndx = stages_x; ndx != nodes_per_cell; ++ndx)
 							host_masks[cell_type + ndx] = 0;
 						break;
 					case Cell_Type::Dirichlet_left:
-						for (auto ndx = 0; ndx != stages_x; ++ndx)
+						for (cl_uint ndx = 0; ndx != stages_x; ++ndx)
 							host_masks[cell_type + ndx] = 0;
 						break;
 					case Cell_Type::Dirichlet_right:
-						for (auto ndx = 0; ndx != nodes_per_cell; ++ndx)
+						for (cl_uint ndx = 0; ndx != nodes_per_cell; ++ndx)
 							host_masks[cell_type + ndx] = 0;
 						break;
 					default:
@@ -333,7 +333,7 @@ namespace Waves {
 				}
 			}
 			i = c + 1;
-			for (; i != num_cells; ++i) { // look for right neighbour
+			for (; i != static_cast<int>(num_cells); ++i) { // look for right neighbour
 				if (fabs(position_information[i * 2 + 1] - position_information[c * 2 + 1]) > half*step_size_y) // abort if we're no longer on the same row
 					break;
 				if ((position_information[i * 2 + 0] - position_information[c * 2 + 0] > half*step_size_x) && (position_information[i * 2 + 0] - position_information[c * 2 + 0] < one_half*step_size_x)) {
@@ -341,7 +341,7 @@ namespace Waves {
 					break;
 				}
 			}
-			for (; i != num_cells; ++i) { // continue looking for bottom neighbour
+			for (; i != static_cast<int>(num_cells); ++i) { // continue looking for bottom neighbour
 				if (position_information[i * 2 + 1] - position_information[c * 2 + 1] > one_half*step_size_y) // abort if we're more than 1 row ahead
 					break;
 				if ((fabs(position_information[i * 2 + 0] - position_information[c * 2 + 0]) < half*step_size_x) && (position_information[i * 2 + 1] - position_information[c * 2 + 1] > half*step_size_y) && (position_information[c * 2 + 1] - position_information[i * 2 + 1] < one_half*step_size_y)) {

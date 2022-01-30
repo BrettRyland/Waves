@@ -66,8 +66,8 @@ namespace Waves {
 		void quit(); ///< Quit
 		void change_dissipation(double value); ///< Change the value of the dissipation
 		void change_timestep(double timestep); ///< Change the value of the timestep
-		double const get_time() const { return m_integrator_wrapper.get_time(); } ///< Get the time reported by the simulation (i.e. the time step * number of steps)
-		size_t const get_spf() { return m_integrator_wrapper.get_steps_taken(); } ///< Get the number of steps taken since last time this function was called
+		double get_time() const { return m_integrator_wrapper.get_time(); } ///< Get the time reported by the simulation (i.e. the time step * number of steps)
+		size_t get_spf() { return m_integrator_wrapper.get_steps_taken(); } ///< Get the number of steps taken since last time this function was called
 
 	signals:
 		void pause_integrator(); ///< Pause the integrator

@@ -39,7 +39,7 @@ namespace Waves
 
 		/** Accessors
 		@{*/
-		inline bool const is_paused() const { return m_paused; } ///< Check our paused state
+		inline bool is_paused() const { return m_paused; } ///< Check our paused state
 		auto const get_steps_taken()
 		{
 			auto steps_taken = m_step_counter;
