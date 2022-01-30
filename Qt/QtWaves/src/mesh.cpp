@@ -3,7 +3,7 @@
 #include <cassert>
 #include <limits>
 #include <QVector3D>
-#include <QOpenglFunctions>
+#include <QOpenGLFunctions>
 #include "mesh.h"
 #include <boost/compute/interop/opengl.hpp>
 

@@ -11,6 +11,9 @@
 #include "ui_oglwidget.h"
 #include "integrator_wrapper.h"
 
+// Fix #define bug in xlib.h header.
+#undef Bool
+
 namespace Waves {
 
 	/** Modelview helper class

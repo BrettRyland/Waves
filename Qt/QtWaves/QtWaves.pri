@@ -12,13 +12,13 @@ HEADERS += ./include/vertex.h \
     ./include/integrator_wrapper.h \
     ./include/mainwindow.h \
     ./include/oglwidget.h \
-    ../../include/integrator.h
+    ./include/integratorCL.h
 SOURCES += ./src/integrator_wrapper.cpp \
     ./src/main.cpp \
     ./src/mainwindow.cpp \
     ./src/mesh.cpp \
     ./src/oglwidget.cpp \
-    ../../source/integrator.cpp
+    ./src/integratorCL.cpp
 FORMS += ./forms/mainwindow.ui \
     ./forms/oglwidget.ui
 RESOURCES += qtwaves.qrc

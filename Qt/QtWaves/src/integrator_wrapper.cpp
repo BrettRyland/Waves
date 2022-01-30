@@ -14,8 +14,10 @@ namespace Waves
 	// Our modified run() function.
 	void Integrator_Wrapper::run()
 	{
-		while (!m_quit) {
-			if (!m_paused) {
+		while (!m_quit)
+		{
+			if (!m_paused)
+			{
 				// Integrator is running, so it's not safe to modify it.
 				m_modifiable = false;
 				// Actually perform one step of the integrator.
@@ -24,7 +26,8 @@ namespace Waves
 				// Signal that we're done.
 				emit result_ready();
 			}
-			else {
+			else
+			{
 				// Integrator is paused, so it's safe to modify it now.
 				m_modifiable = true;
 				// Also, we can sleep for a bit to conserve CPU resources. (The run() function runs in this thread.)
@@ -43,4 +46,43 @@ namespace Waves
 			QThread::msleep(100);
 	}
 
+	void Integrator_Wrapper::change_initial_conditions(int ic)
+	{
+		m_integrator.change_initial_conditions(ic);
+		m_mesh.update_surface_mesh_CL(m_integrator);
+	}
+
+	void Integrator_Wrapper::change_boundary_conditions(int bc)
+	{
+		m_integrator.change_boundary_conditions(bc);
+		m_mesh.generate_surface_mesh(m_integrator);
+	}
+
+	void Integrator_Wrapper::set_artificial_dissipation(double d)
+	{
+		m_integrator.set_artificial_dissipation(static_cast<integrator_precision>(d));
+	}
+
+	void Integrator_Wrapper::change_time_step(double dt)
+	{
+		m_integrator.change_time_step(static_cast<integrator_precision>(dt));
+	}
+
+	void Integrator_Wrapper::reverse_time()
+	{
+		m_integrator.change_time_step(-m_integrator.get_time_step());
+		m_integrator.half_step();
+		m_integrator.half_step();
+	}
+
+	void Integrator_Wrapper::connect_mesh_with_vertex_buffer(QOpenGLBuffer &vertex_buffer)
+	{
+		m_mesh.configure_mesh_update_kernel(m_integrator, vertex_buffer);
+		m_mesh.update_surface_mesh_CL(m_integrator);
+	}
+
+	void Integrator_Wrapper::update_surface_mesh()
+	{
+		m_mesh.update_surface_mesh_CL(m_integrator);
+	}
 }

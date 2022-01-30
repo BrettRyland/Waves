@@ -6,7 +6,7 @@
 #include <limits> // for std::numeric_limits::max()
 #include <cassert> // for assert()
 #include "integratorCL.h"
-#include "br/common/mathconstants.h"
+#include "mathconstants.h"
 
 namespace Waves {
 	// Initialise the Integrator.

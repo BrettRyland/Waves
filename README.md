@@ -5,3 +5,7 @@ Additionally, the explicit ODEs are local (only depending on neighbouring cells)
 
 A Qt frontend to the integrator can be found in the Qt folder.
 As of version 3.0, the integrator has been implemented in OpenCL using boost.compute. This allows for a significant performance gain sufficient to run a 1 million element simulation using 3 stages in x and y.
+
+## Build Instructions
+Run `make` in `Qt/QtWaves`.
+Hopefully everything required is there.

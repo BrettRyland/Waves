@@ -7,7 +7,7 @@
 #include <cassert> // for assert()
 //#include <execution> // for parallel execution policies
 #include "integrator.h"
-#include "br/common/mathconstants.h"
+#include "mathconstants.h"
 
 namespace Waves {
 	/// Our global instance of the Integrator. This needs to be global for OpenGL to access it.
