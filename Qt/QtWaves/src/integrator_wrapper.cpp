@@ -68,6 +68,16 @@ namespace Waves
 		m_integrator.change_time_step(static_cast<integrator_precision>(dt));
 	}
 
+	void Integrator_Wrapper::change_wave_speed(double speed)
+	{
+		m_integrator.change_wave_speed(static_cast<integrator_precision>(speed));
+	}
+
+	void Integrator_Wrapper::change_height_scale(double scale)
+	{
+		m_integrator.change_height_scale(static_cast<integrator_precision>(scale));
+	}
+
 	void Integrator_Wrapper::reverse_time()
 	{
 		m_integrator.change_time_step(-m_integrator.get_time_step());

@@ -70,7 +70,9 @@ namespace Waves
 				step_size_time,																	///< Step size in time
 				step_size_x,																		///< Step size in the x direction
 				step_size_y,																		///< Step size in the y direction
-				wave_speed;																			///< Wave speed
+				wave_speed,																			///< Wave speed
+				wave_speed_scale,																///< Wave speed scale
+				height_scale;																		///< Height scale for the initial conditions
 		int initial_conditions;															///< Initial conditions indicator
 		int boundary_conditions;														///< Boudary conditions indicator
 		integrator_precision m_artificial_dissipation{0.0}; ///< Artificial dissipation amount (default: 0.0 = no dissipation). Anything other than 0.0 breaks multisymplecticity and most likely stability of time integrator. Note: currently not enabled.
@@ -116,14 +118,18 @@ namespace Waves
 
 		/** @name OpenCL kernels
 		@{*/
-		boost::compute::kernel kernel_step_U,																																																																																																												///< Take a step in the U variable
-				kernel_step_V,																																																																																																																					///< Take a step in the V variable
-				kernel_compute_U_xx,																																																																																																																		///< Compute the second spatial derivative of U in the x-direction
-				kernel_compute_U_yy;																																																																																																																		///< Compute the second spatial derivative of U in the y-direction
-		void generate_kernels();																																																																																																																		///< Generate the kernels required for the simulation
+		boost::compute::kernel kernel_step_U, ///< Take a step in the U variable
+				kernel_step_V,										///< Take a step in the V variable
+				kernel_compute_U_xx,							///< Compute the second spatial derivative of U in the x-direction
+				kernel_compute_U_yy;							///< Compute the second spatial derivative of U in the y-direction
+
+		void generate_kernels(); ///< Generate the kernels required for the simulation
+
 		void configure_kernels_static_vars(std::vector<cl_uint> const &host_cell_type_x, std::vector<cl_uint> const &host_cell_type_y, std::vector<cl_uint> const &host_adjacency_information, std::vector<integrator_precision> const &host_position_information); ///< Update the kernel configuration (arguments) whenever the structure of the simulation is changed. E.g. a change in boundary conditions.
-		void configure_kernels_dynamic_vars(std::vector<integrator_precision> const &host_U, std::vector<integrator_precision> const &host_V);																																																											///< Update the kernel dynamic variables (arguments). E.g. a change in initial conditions.
-																																																																																																																																///@}
+
+		void configure_kernels_dynamic_vars(std::vector<integrator_precision> const &host_U, std::vector<integrator_precision> const &host_V); ///< Update the kernel dynamic variables (arguments). E.g. a change in initial conditions.
+
+		///@}
 
 	public:
 		/** @name Core integrator methods
@@ -158,6 +164,17 @@ namespace Waves
 			m_artificial_dissipation = value /*std::clamp(value, 0.0, 1.0) std::clamp is not part of gcc-6 in linux*/;
 			kernel_step_U.set_arg(8, m_artificial_dissipation);
 		} ///< Set the amount of artificial dissipation in the integrator
+		void change_wave_speed(integrator_precision scale)
+		{
+			wave_speed_scale = scale;
+			kernel_step_V.set_arg(10, wave_speed * wave_speed_scale);
+		} ///< Change the wave speed in the integrator
+		void change_height_scale(integrator_precision scale)
+		{
+			height_scale = scale;
+			if (time == static_cast<integrator_precision>(0.0))
+				change_initial_conditions(initial_conditions);
+		} ///< Set the height scale for initial conditions
 		///@}
 
 		/** @name Accessors
@@ -167,6 +184,7 @@ namespace Waves
 		auto get_time_step() const { return step_size_time; }	 ///< Get the current time step of the integrator
 		auto get_time() const { return time; }								 ///< Get the current time reported by the integrator
 		auto get_number_of_cells() const { return num_cells; } ///< Get the number of cells in the simulation
+		auto get_wave_speed() const { return wave_speed; }		 ///< Get the wave speed of the current boundary conditions
 		///@}
 
 		/** @name Device to host accessors

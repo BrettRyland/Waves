@@ -16,6 +16,7 @@ namespace Waves {
 		~mainwindow(); ///< Destructor
 
 	public slots:
+		void on_reset_Button_clicked(); ///< Reset the integrator to the current initial conditions
 		void on_pause_Button_clicked(); ///< Handle the pause button being clicked
 		void update_pause_Button(); ///< Update the text on the pause button to reflect the current state
 		void on_fullscreen_Button_clicked(); ///< Handle the fullscreen button being clicked

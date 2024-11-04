@@ -34,10 +34,13 @@ public:
     QVBoxLayout *verticalLayout;
     QComboBox *IC_comboBox;
     QComboBox *BC_comboBox;
+    QDoubleSpinBox *heightScale_doubleSpinBox;
+    QDoubleSpinBox *waveSpeed_doubleSpinBox;
+    QDoubleSpinBox *dissipation_doubleSpinBox;
+    QPushButton *reset_Button;
     QPushButton *pause_Button;
     QDoubleSpinBox *timestep_doubleSpinBox;
     QLineEdit *time_lineEdit;
-    QDoubleSpinBox *dissipation_doubleSpinBox;
     QPushButton *fullscreen_Button;
     QPushButton *reset_view_Button;
     QSpacerItem *verticalSpacer;
@@ -99,6 +102,40 @@ public:
 
         verticalLayout->addWidget(BC_comboBox);
 
+        heightScale_doubleSpinBox = new QDoubleSpinBox(centralWidget);
+        heightScale_doubleSpinBox->setObjectName(QString::fromUtf8("heightScale_doubleSpinBox"));
+        heightScale_doubleSpinBox->setDecimals(1);
+        heightScale_doubleSpinBox->setMinimum(0.000000000000000);
+        heightScale_doubleSpinBox->setMaximum(2.000000000000000);
+        heightScale_doubleSpinBox->setSingleStep(0.100000000000000);
+        heightScale_doubleSpinBox->setValue(1.000000000000000);
+
+        verticalLayout->addWidget(heightScale_doubleSpinBox);
+
+        waveSpeed_doubleSpinBox = new QDoubleSpinBox(centralWidget);
+        waveSpeed_doubleSpinBox->setObjectName(QString::fromUtf8("waveSpeed_doubleSpinBox"));
+        waveSpeed_doubleSpinBox->setDecimals(1);
+        waveSpeed_doubleSpinBox->setMaximum(100.000000000000000);
+        waveSpeed_doubleSpinBox->setSingleStep(0.100000000000000);
+        waveSpeed_doubleSpinBox->setStepType(QAbstractSpinBox::AdaptiveDecimalStepType);
+        waveSpeed_doubleSpinBox->setValue(1.000000000000000);
+
+        verticalLayout->addWidget(waveSpeed_doubleSpinBox);
+
+        dissipation_doubleSpinBox = new QDoubleSpinBox(centralWidget);
+        dissipation_doubleSpinBox->setObjectName(QString::fromUtf8("dissipation_doubleSpinBox"));
+        dissipation_doubleSpinBox->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
+        dissipation_doubleSpinBox->setDecimals(3);
+        dissipation_doubleSpinBox->setMaximum(1.000000000000000);
+        dissipation_doubleSpinBox->setSingleStep(0.001000000000000);
+
+        verticalLayout->addWidget(dissipation_doubleSpinBox);
+
+        reset_Button = new QPushButton(centralWidget);
+        reset_Button->setObjectName(QString::fromUtf8("reset_Button"));
+
+        verticalLayout->addWidget(reset_Button);
+
         pause_Button = new QPushButton(centralWidget);
         pause_Button->setObjectName(QString::fromUtf8("pause_Button"));
 
@@ -121,15 +158,6 @@ public:
         time_lineEdit->setReadOnly(true);
 
         verticalLayout->addWidget(time_lineEdit);
-
-        dissipation_doubleSpinBox = new QDoubleSpinBox(centralWidget);
-        dissipation_doubleSpinBox->setObjectName(QString::fromUtf8("dissipation_doubleSpinBox"));
-        dissipation_doubleSpinBox->setAlignment(Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter);
-        dissipation_doubleSpinBox->setDecimals(3);
-        dissipation_doubleSpinBox->setMaximum(1.000000000000000);
-        dissipation_doubleSpinBox->setSingleStep(0.001000000000000);
-
-        verticalLayout->addWidget(dissipation_doubleSpinBox);
 
         fullscreen_Button = new QPushButton(centralWidget);
         fullscreen_Button->setObjectName(QString::fromUtf8("fullscreen_Button"));
@@ -199,14 +227,19 @@ public:
 #if QT_CONFIG(whatsthis)
         BC_comboBox->setWhatsThis(QCoreApplication::translate("Waves::mainwindowClass", "Boundary Conditions", nullptr));
 #endif // QT_CONFIG(whatsthis)
-        pause_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Pause", nullptr));
-        timestep_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Timestep: ", nullptr));
-        timestep_doubleSpinBox->setSuffix(QCoreApplication::translate("Waves::mainwindowClass", "s", nullptr));
-        time_lineEdit->setPlaceholderText(QString());
+        heightScale_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Initial height scale: ", nullptr));
+        heightScale_doubleSpinBox->setSuffix(QCoreApplication::translate("Waves::mainwindowClass", "x", nullptr));
+        waveSpeed_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Wave speed scale: ", nullptr));
+        waveSpeed_doubleSpinBox->setSuffix(QCoreApplication::translate("Waves::mainwindowClass", "x", nullptr));
 #if QT_CONFIG(tooltip)
         dissipation_doubleSpinBox->setToolTip(QCoreApplication::translate("Waves::mainwindowClass", "Artificial dissipation", nullptr));
 #endif // QT_CONFIG(tooltip)
         dissipation_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Dissipation factor: ", nullptr));
+        reset_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Reset", nullptr));
+        pause_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Pause", nullptr));
+        timestep_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Timestep: ", nullptr));
+        timestep_doubleSpinBox->setSuffix(QCoreApplication::translate("Waves::mainwindowClass", "s", nullptr));
+        time_lineEdit->setPlaceholderText(QString());
         fullscreen_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Fullscreen", nullptr));
         reset_view_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Reset view", nullptr));
         quit_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Quit", nullptr));
