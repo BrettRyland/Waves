@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.12.8
+** Created by: Qt User Interface Compiler version 5.15.13
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -169,47 +169,47 @@ public:
 
     void retranslateUi(QMainWindow *Waves__mainwindowClass)
     {
-        Waves__mainwindowClass->setWindowTitle(QApplication::translate("Waves::mainwindowClass", "QtGL", nullptr));
-        IC_comboBox->setItemText(0, QApplication::translate("Waves::mainwindowClass", "Single frequency", nullptr));
-        IC_comboBox->setItemText(1, QApplication::translate("Waves::mainwindowClass", "Continuous spectrum", nullptr));
-        IC_comboBox->setItemText(2, QApplication::translate("Waves::mainwindowClass", "Localised hump", nullptr));
-        IC_comboBox->setItemText(3, QApplication::translate("Waves::mainwindowClass", "Two localised humps", nullptr));
-        IC_comboBox->setItemText(4, QApplication::translate("Waves::mainwindowClass", "Off-centre localised hump", nullptr));
-        IC_comboBox->setItemText(5, QApplication::translate("Waves::mainwindowClass", "A localised wave", nullptr));
+        Waves__mainwindowClass->setWindowTitle(QCoreApplication::translate("Waves::mainwindowClass", "QtGL", nullptr));
+        IC_comboBox->setItemText(0, QCoreApplication::translate("Waves::mainwindowClass", "Single frequency", nullptr));
+        IC_comboBox->setItemText(1, QCoreApplication::translate("Waves::mainwindowClass", "Continuous spectrum", nullptr));
+        IC_comboBox->setItemText(2, QCoreApplication::translate("Waves::mainwindowClass", "Localised hump", nullptr));
+        IC_comboBox->setItemText(3, QCoreApplication::translate("Waves::mainwindowClass", "Two localised humps", nullptr));
+        IC_comboBox->setItemText(4, QCoreApplication::translate("Waves::mainwindowClass", "Off-centre localised hump", nullptr));
+        IC_comboBox->setItemText(5, QCoreApplication::translate("Waves::mainwindowClass", "A localised wave", nullptr));
 
-#ifndef QT_NO_TOOLTIP
-        IC_comboBox->setToolTip(QApplication::translate("Waves::mainwindowClass", "Initial conditions", nullptr));
-#endif // QT_NO_TOOLTIP
-#ifndef QT_NO_STATUSTIP
+#if QT_CONFIG(tooltip)
+        IC_comboBox->setToolTip(QCoreApplication::translate("Waves::mainwindowClass", "Initial conditions", nullptr));
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(statustip)
         IC_comboBox->setStatusTip(QString());
-#endif // QT_NO_STATUSTIP
-#ifndef QT_NO_WHATSTHIS
-        IC_comboBox->setWhatsThis(QApplication::translate("Waves::mainwindowClass", "Initial conditions", nullptr));
-#endif // QT_NO_WHATSTHIS
-        BC_comboBox->setItemText(0, QApplication::translate("Waves::mainwindowClass", "Periodic square", nullptr));
-        BC_comboBox->setItemText(1, QApplication::translate("Waves::mainwindowClass", "Dirichlet, square", nullptr));
-        BC_comboBox->setItemText(2, QApplication::translate("Waves::mainwindowClass", "Dirichlet, circle", nullptr));
-        BC_comboBox->setItemText(3, QApplication::translate("Waves::mainwindowClass", "Dirichlet, circle with a cusp", nullptr));
-        BC_comboBox->setItemText(4, QApplication::translate("Waves::mainwindowClass", "Dirichlet, intersecting circles", nullptr));
-        BC_comboBox->setItemText(5, QApplication::translate("Waves::mainwindowClass", "Double slit (mixed BCs)", nullptr));
+#endif // QT_CONFIG(statustip)
+#if QT_CONFIG(whatsthis)
+        IC_comboBox->setWhatsThis(QCoreApplication::translate("Waves::mainwindowClass", "Initial conditions", nullptr));
+#endif // QT_CONFIG(whatsthis)
+        BC_comboBox->setItemText(0, QCoreApplication::translate("Waves::mainwindowClass", "Periodic square", nullptr));
+        BC_comboBox->setItemText(1, QCoreApplication::translate("Waves::mainwindowClass", "Dirichlet, square", nullptr));
+        BC_comboBox->setItemText(2, QCoreApplication::translate("Waves::mainwindowClass", "Dirichlet, circle", nullptr));
+        BC_comboBox->setItemText(3, QCoreApplication::translate("Waves::mainwindowClass", "Dirichlet, circle with a cusp", nullptr));
+        BC_comboBox->setItemText(4, QCoreApplication::translate("Waves::mainwindowClass", "Dirichlet, intersecting circles", nullptr));
+        BC_comboBox->setItemText(5, QCoreApplication::translate("Waves::mainwindowClass", "Double slit (mixed BCs)", nullptr));
 
-#ifndef QT_NO_TOOLTIP
-        BC_comboBox->setToolTip(QApplication::translate("Waves::mainwindowClass", "Boundary Conditions", nullptr));
-#endif // QT_NO_TOOLTIP
-#ifndef QT_NO_WHATSTHIS
-        BC_comboBox->setWhatsThis(QApplication::translate("Waves::mainwindowClass", "Boundary Conditions", nullptr));
-#endif // QT_NO_WHATSTHIS
-        pause_Button->setText(QApplication::translate("Waves::mainwindowClass", "Pause", nullptr));
-        timestep_doubleSpinBox->setPrefix(QApplication::translate("Waves::mainwindowClass", "Timestep: ", nullptr));
-        timestep_doubleSpinBox->setSuffix(QApplication::translate("Waves::mainwindowClass", "s", nullptr));
+#if QT_CONFIG(tooltip)
+        BC_comboBox->setToolTip(QCoreApplication::translate("Waves::mainwindowClass", "Boundary Conditions", nullptr));
+#endif // QT_CONFIG(tooltip)
+#if QT_CONFIG(whatsthis)
+        BC_comboBox->setWhatsThis(QCoreApplication::translate("Waves::mainwindowClass", "Boundary Conditions", nullptr));
+#endif // QT_CONFIG(whatsthis)
+        pause_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Pause", nullptr));
+        timestep_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Timestep: ", nullptr));
+        timestep_doubleSpinBox->setSuffix(QCoreApplication::translate("Waves::mainwindowClass", "s", nullptr));
         time_lineEdit->setPlaceholderText(QString());
-#ifndef QT_NO_TOOLTIP
-        dissipation_doubleSpinBox->setToolTip(QApplication::translate("Waves::mainwindowClass", "Artificial dissipation", nullptr));
-#endif // QT_NO_TOOLTIP
-        dissipation_doubleSpinBox->setPrefix(QApplication::translate("Waves::mainwindowClass", "Dissipation factor: ", nullptr));
-        fullscreen_Button->setText(QApplication::translate("Waves::mainwindowClass", "Fullscreen", nullptr));
-        reset_view_Button->setText(QApplication::translate("Waves::mainwindowClass", "Reset view", nullptr));
-        quit_Button->setText(QApplication::translate("Waves::mainwindowClass", "Quit", nullptr));
+#if QT_CONFIG(tooltip)
+        dissipation_doubleSpinBox->setToolTip(QCoreApplication::translate("Waves::mainwindowClass", "Artificial dissipation", nullptr));
+#endif // QT_CONFIG(tooltip)
+        dissipation_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Dissipation factor: ", nullptr));
+        fullscreen_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Fullscreen", nullptr));
+        reset_view_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Reset view", nullptr));
+        quit_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Quit", nullptr));
     } // retranslateUi
 
 };

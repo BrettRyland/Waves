@@ -91,7 +91,7 @@ namespace Waves {
 		U_xx.resize(host_U.size(), m_queue);
 		U_yy.resize(host_U.size(), m_queue);
 		m_queue.finish(); // Wait for the queue to finish before changing kernel args
-		kernel_step_U.set_args(U.get_buffer(), masks.get_buffer(), V.get_buffer(), cell_type_x.get_buffer(), cell_type_y.get_buffer(), cell_type_count, nodes_per_cell, step_size_time);
+		kernel_step_U.set_args(U.get_buffer(), masks.get_buffer(), V.get_buffer(), cell_type_x.get_buffer(), cell_type_y.get_buffer(), cell_type_count, nodes_per_cell, step_size_time, m_artificial_dissipation);
 		kernel_step_V.set_args(V.get_buffer(), masks.get_buffer(), U.get_buffer(), U_xx.get_buffer(), U_yy.get_buffer(), cell_type_x.get_buffer(), cell_type_y.get_buffer(), cell_type_count, nodes_per_cell, step_size_time, wave_speed);
 		kernel_compute_U_xx.set_args(U_xx.get_buffer(), U.get_buffer(), cell_type_x.get_buffer(), coefficients_x.get_buffer(), adjacency_information.get_buffer(), stages_x, stages_y, step_size_x);
 		kernel_compute_U_yy.set_args(U_yy.get_buffer(), U.get_buffer(), cell_type_y.get_buffer(), coefficients_y.get_buffer(), adjacency_information.get_buffer(), stages_x, stages_y, step_size_y);

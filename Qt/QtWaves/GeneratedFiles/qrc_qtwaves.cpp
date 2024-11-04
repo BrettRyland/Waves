@@ -1,13 +1,13 @@
 /****************************************************************************
 ** Resource object code
 **
-** Created by: The Resource Compiler for Qt version 5.12.8
+** Created by: The Resource Compiler for Qt version 5.15.13
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
 static const unsigned char qt_resource_data[] = {
-  // /home/brett/repos/Waves/Qt/QtWaves/shaders/surface.vert.glsl
+  // /home/brett/Work/Waves/Qt/QtWaves/shaders/surface.vert.glsl
   0x0,0x0,0x2,0x3b,
   0x23,
   0x76,0x65,0x72,0x73,0x69,0x6f,0x6e,0x20,0x33,0x33,0x30,0xa,0xa,0x75,0x6e,0x69,
@@ -46,7 +46,7 @@ static const unsigned char qt_resource_data[] = {
   0x73,0x68,0x69,0x6e,0x69,0x6e,0x65,0x73,0x73,0x3b,0xa,0x20,0x20,0x20,0x20,0x66,
   0x72,0x61,0x67,0x5f,0x73,0x70,0x65,0x63,0x75,0x6c,0x61,0x72,0x20,0x3d,0x20,0x73,
   0x70,0x65,0x63,0x75,0x6c,0x61,0x72,0x3b,0xa,0x7d,
-    // /home/brett/repos/Waves/Qt/QtWaves/shaders/surface.frag.glsl
+    // /home/brett/Work/Waves/Qt/QtWaves/shaders/surface.frag.glsl
   0x0,0x0,0x4,0x9,
   0x23,
   0x76,0x65,0x72,0x73,0x69,0x6f,0x6e,0x20,0x33,0x33,0x30,0xa,0xa,0x75,0x6e,0x69,
@@ -179,7 +179,6 @@ namespace QT_NAMESPACE {
 #endif
 
 bool qRegisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
-
 bool qUnregisterResourceData(int, const unsigned char *, const unsigned char *, const unsigned char *);
 
 #ifdef QT_NAMESPACE
@@ -189,16 +188,18 @@ bool qUnregisterResourceData(int, const unsigned char *, const unsigned char *, 
 int QT_RCC_MANGLE_NAMESPACE(qInitResources_qtwaves)();
 int QT_RCC_MANGLE_NAMESPACE(qInitResources_qtwaves)()
 {
+    int version = 3;
     QT_RCC_PREPEND_NAMESPACE(qRegisterResourceData)
-        (0x2, qt_resource_struct, qt_resource_name, qt_resource_data);
+        (version, qt_resource_struct, qt_resource_name, qt_resource_data);
     return 1;
 }
 
 int QT_RCC_MANGLE_NAMESPACE(qCleanupResources_qtwaves)();
 int QT_RCC_MANGLE_NAMESPACE(qCleanupResources_qtwaves)()
 {
+    int version = 3;
     QT_RCC_PREPEND_NAMESPACE(qUnregisterResourceData)
-       (0x2, qt_resource_struct, qt_resource_name, qt_resource_data);
+       (version, qt_resource_struct, qt_resource_name, qt_resource_data);
     return 1;
 }
 
