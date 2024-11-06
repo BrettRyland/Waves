@@ -45,13 +45,14 @@ namespace Waves
 		auto const get_steps_taken()
 		{
 			auto steps_taken = m_step_counter;
+			m_avg_step_count = 0.95 * m_avg_step_count + 0.05 * steps_taken;
 			m_step_counter = 0;
-			return steps_taken;
+			return m_avg_step_count;
 		} ///< Returns the number of steps taken since the last time this function was called.
 		// integrator pass-through accessors
-		auto const get_IC() const { return m_integrator.get_IC(); }			///< Get the current initial conditions
-		auto const get_BC() const { return m_integrator.get_BC(); }			///< Get the current boundary conditions
-		auto const get_time() const { return m_integrator.get_time(); } ///< Get the time reported by the integrator
+		auto const get_IC() const { return m_integrator.get_IC(); }									///< Get the current initial conditions
+		auto const get_BC() const { return m_integrator.get_BC(); }									///< Get the current boundary conditions
+		auto const get_time() const { return m_integrator.get_time(); }							///< Get the time reported by the integrator
 		auto const get_wave_speed() const { return m_integrator.get_wave_speed(); } ///< Get the wave speed for the current boundary conditions
 		// mesh pass-through accessors
 		auto const get_mesh_vertex_data() const { return m_mesh.get_vertex_data(); }					 ///< Get the mesh vertex data
@@ -71,11 +72,12 @@ namespace Waves
 		void result_ready(); ///< Signal that an iteration of the integrator has been performed and is ready to be displayed.
 
 	private:
-		Integrator m_integrator;	///< Our integrator
-		Mesh m_mesh;							///< Our mesh
-		bool m_paused{true};			///< Flag to indicate that we should pause on the next loop of run()
-		bool m_quit{false};				///< Flag to indicate that we should quit on the next loop of run()
-		bool m_modifiable{true};	///< Flag to indicate when it is safe to modify the integrator
-		size_t m_step_counter{0}; ///< A step counter for measuring the number of steps taken per frame rendered
+		Integrator m_integrator;		///< Our integrator
+		Mesh m_mesh;								///< Our mesh
+		bool m_paused{true};				///< Flag to indicate that we should pause on the next loop of run()
+		bool m_quit{false};					///< Flag to indicate that we should quit on the next loop of run()
+		bool m_modifiable{true};		///< Flag to indicate when it is safe to modify the integrator
+		size_t m_step_counter{0};		///< A step counter for measuring the number of steps taken per frame rendered
+		double m_avg_step_count{0}; ///< Running average of steps per frame rendered.
 	};
 }

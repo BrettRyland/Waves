@@ -8,6 +8,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QMatrix4x4>
 
+#include <chrono>
+
 #include "ui_oglwidget.h"
 #include "integrator_wrapper.h"
 
@@ -81,7 +83,8 @@ namespace Waves
 		void change_height_scale(double scale);																								///< Change the height scale
 		void reset_integrator() { change_initial_conditions(m_integrator_wrapper.get_IC()); } ///< Reset the integrator to the initial conditions
 		double get_time() const { return m_integrator_wrapper.get_time(); }										///< Get the time reported by the simulation (i.e. the time step * number of steps)
-		size_t get_spf() { return m_integrator_wrapper.get_steps_taken(); }										///< Get the number of steps taken since last time this function was called
+		double get_spf() { return m_integrator_wrapper.get_steps_taken(); }										///< Get the number of steps taken since last time this function was called
+		double get_fps() { return m_fps; }																										///< Get the smoothed FPS.
 
 	signals:
 		void pause_integrator();					///< Pause the integrator
@@ -148,6 +151,8 @@ namespace Waves
 		void mouseDoubleClickEvent(QMouseEvent *event); ///< Handle mouse double-click events
 		///@}
 
-		double m_max_fps{60.0}; ///< The maximum framerate at which to update the OpenGL widget
+		double m_max_fps{60.0};																												 ///< The maximum framerate at which to update the OpenGL widget
+		double m_fps{m_max_fps};																											 ///< Smoothed framerate.
+		std::chrono::steady_clock::time_point m_tic{std::chrono::steady_clock::now()}; ///< Time tracker.
 	};
 }

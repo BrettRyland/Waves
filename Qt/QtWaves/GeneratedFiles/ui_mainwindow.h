@@ -41,6 +41,7 @@ public:
     QPushButton *pause_Button;
     QDoubleSpinBox *timestep_doubleSpinBox;
     QLineEdit *time_lineEdit;
+    QLineEdit *stats_lineEdit;
     QPushButton *fullscreen_Button;
     QPushButton *reset_view_Button;
     QSpacerItem *verticalSpacer;
@@ -52,7 +53,7 @@ public:
         if (Waves__mainwindowClass->objectName().isEmpty())
             Waves__mainwindowClass->setObjectName(QString::fromUtf8("Waves__mainwindowClass"));
         Waves__mainwindowClass->setWindowModality(Qt::ApplicationModal);
-        Waves__mainwindowClass->resize(1024, 600);
+        Waves__mainwindowClass->resize(1400, 800);
         QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         sizePolicy.setHorizontalStretch(1);
         sizePolicy.setVerticalStretch(1);
@@ -159,6 +160,11 @@ public:
 
         verticalLayout->addWidget(time_lineEdit);
 
+        stats_lineEdit = new QLineEdit(centralWidget);
+        stats_lineEdit->setObjectName(QString::fromUtf8("stats_lineEdit"));
+
+        verticalLayout->addWidget(stats_lineEdit);
+
         fullscreen_Button = new QPushButton(centralWidget);
         fullscreen_Button->setObjectName(QString::fromUtf8("fullscreen_Button"));
 
@@ -237,6 +243,11 @@ public:
         dissipation_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Dissipation factor: ", nullptr));
         reset_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Reset", nullptr));
         pause_Button->setText(QCoreApplication::translate("Waves::mainwindowClass", "Pause", nullptr));
+#if QT_CONFIG(tooltip)
+        timestep_doubleSpinBox->setToolTip(QCoreApplication::translate("Waves::mainwindowClass", "A CFL condition (c*\316\224t/\316\224x < 1) needs to be satisfied for stability.\n"
+"If the simulation blows up, reduce the timestep or wave speed\n"
+"(\316\224x is fixed by the boundary conditions).", nullptr));
+#endif // QT_CONFIG(tooltip)
         timestep_doubleSpinBox->setPrefix(QCoreApplication::translate("Waves::mainwindowClass", "Timestep: ", nullptr));
         timestep_doubleSpinBox->setSuffix(QCoreApplication::translate("Waves::mainwindowClass", "s", nullptr));
         time_lineEdit->setPlaceholderText(QString());

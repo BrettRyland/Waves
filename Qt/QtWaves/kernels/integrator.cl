@@ -5,7 +5,7 @@ typedef float integrator_precision;
 typedef enum { Normal, Periodic_left, Periodic_right, Dirichlet_left, Dirichlet_right, Neumann_left, Neumann_right } Cell_Type;
 
 // Perform a step of size dt in the U variable
-__kernel void step_U(__global integrator_precision *U, __global const unsigned int *masks, __global const integrator_precision *V, __global const unsigned int *cell_type_x, __global const unsigned int *cell_type_y, unsigned int cell_type_count, unsigned int nodes_per_cell, integrator_precision dt, float dissipation) {
+__kernel void step_U(__global integrator_precision *U, __global const unsigned int *masks, __global const integrator_precision *V, __global const unsigned int *cell_type_x, __global const unsigned int *cell_type_y, unsigned int cell_type_count, unsigned int nodes_per_cell, integrator_precision dt, integrator_precision dissipation) {
 	size_t cell = get_global_id(0);
 	for (unsigned int node = 0; node != nodes_per_cell; ++node)
 		if (masks[(cell_type_y[cell] * cell_type_count + cell_type_x[cell])*nodes_per_cell + node] == 1) {

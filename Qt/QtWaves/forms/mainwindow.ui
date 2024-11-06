@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1024</width>
-    <height>600</height>
+    <width>1400</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -231,6 +231,11 @@
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="timestep_doubleSpinBox">
+        <property name="toolTip">
+         <string>A CFL condition (c*Δt/Δx &lt; 1) needs to be satisfied for stability.
+If the simulation blows up, reduce the timestep or wave speed
+(Δx is fixed by the boundary conditions).</string>
+        </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
@@ -269,6 +274,9 @@
          <string/>
         </property>
        </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="stats_lineEdit"/>
       </item>
       <item>
        <widget class="QPushButton" name="fullscreen_Button">
