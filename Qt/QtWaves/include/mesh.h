@@ -1,13 +1,13 @@
 #pragma once
 ///@file
 
+#include <QOpenGLBuffer>
 #include <vector>
 #include <array>
-#include <QOpenGLBuffer>
+#include <boost/compute/interop/opengl.hpp>
 
 #include "vertex.h"
 #include "integratorCL.h"
-#include <boost/compute/interop/opengl.hpp>
 
 namespace Waves {
 	/** Surface mesh class (Qt version) for creating a surface mesh to pass to OpenGL.

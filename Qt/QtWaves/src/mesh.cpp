@@ -1,11 +1,11 @@
 ///@file
 
-#include <cassert>
-#include <limits>
 #include <QVector3D>
 #include <QOpenGLFunctions>
-#include "mesh.h"
+#include <cassert>
+#include <limits>
 #include <boost/compute/interop/opengl.hpp>
+#include "mesh.h"
 
 namespace Waves {
 	// Generate a surface mesh.

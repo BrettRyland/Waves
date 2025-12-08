@@ -3,10 +3,10 @@
 #include <QKeyEvent>
 #include <QThread>
 #include <QTimer>
-#include <cmath>
 #include "oglwidget.h"
-#include "integrator_wrapper.h"
 #include <boost/compute/interop/opengl.hpp>
+#include <cmath>
+#include "integrator_wrapper.h"
 
 namespace Waves
 {
@@ -62,7 +62,12 @@ namespace Waves
 	void OGLWidget::initializeGL()
 	{
 		// Initialise the boost.compute context and queue
-		m_shared_context = boost::compute::opengl_create_shared_context();
+		try{
+		m_shared_context = boost::compute::opengl_create_shared_context();}
+		catch(std::exception &e){
+			std::cout << e.what() << std::endl;
+			throw;
+		}
 		m_queue = boost::compute::command_queue(m_shared_context, m_shared_context.get_device());
 
 		// Initialise the integrator wrapper

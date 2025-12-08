@@ -7,10 +7,9 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
 #include <QMatrix4x4>
+#include "ui_oglwidget.h"
 
 #include <chrono>
-
-#include "ui_oglwidget.h"
 #include "integrator_wrapper.h"
 
 // Fix #define bug in xlib.h header.
