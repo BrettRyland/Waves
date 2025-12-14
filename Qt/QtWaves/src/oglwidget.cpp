@@ -349,7 +349,7 @@ namespace Waves
 			if (!is_paused())
 			{
 				m_integrator_wrapper.update_surface_mesh();
-				m_fps = 0.95 * m_fps + 0.05 * 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(tic - m_tic).count();
+				m_fps = 0.95 * m_fps + 0.05 * 1000000.0 / std::chrono::duration_cast<std::chrono::microseconds>(tic - m_tic).count();
 			}
 			m_tic = tic;
 			QOpenGLWidget::update();

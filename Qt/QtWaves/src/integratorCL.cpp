@@ -324,6 +324,23 @@ namespace Waves
 			std::fill(host_V.begin(), host_V.end(), zero);
 			break;
 		}
+		case 6:
+		{ // Continuous spectrum of frequencies, but limited to an off-centre localised hump.
+			// u=exp(f(x,y))-1, where f(x,y)=c*(1-x^2/bx^2-y^2/by^2)
+			// note: if c/bx^2 or c/by^2 is too large then the integrator will break due to a CFL condition!
+			integrator_precision bx = static_cast<integrator_precision>(0.3), by = static_cast<integrator_precision>(0.3), a = static_cast<integrator_precision>(1.5), y0 = static_cast<integrator_precision>(1.0), x0 = static_cast<integrator_precision>(0.0);
+			for (cl_uint c = 0; c < num_cells; ++c)
+				for (unsigned int j = 0; j < stages_y; ++j)
+					for (unsigned int i = 0; i < stages_x; ++i)
+					{
+						integrator_precision x = (host_position_information[c * 2 + 0] + coords_x[i] * step_size_x) * two / domain_scaling_factor[0];
+						integrator_precision y = (host_position_information[c * 2 + 1] + coords_y[j] * step_size_y) * two / domain_scaling_factor[1];
+						host_U[c * nodes_per_cell + j * stages_x + i] = std::max(zero, std::exp(a - a / bx / bx * (x - x0) * (x - x0) - a / by / by * (y - y0) * (y - y0)) - one);
+					}
+			// start with stationary surface
+			std::fill(host_V.begin(), host_V.end(), zero);
+			break;
+		}
 		default: // We've reached the end or been given a wrong value, reset to the first initial condition.
 			return Integrator::change_initial_conditions(0);
 		}
@@ -602,6 +619,63 @@ namespace Waves
 				{
 					auto x = step_size_x * (i - n / 2);
 					auto y = step_size_y * (j - n / 2);
+					host_position_information.insert(host_position_information.end(), {x, y});
+				}
+			std::tie(host_adjacency_information, host_cell_type_x, host_cell_type_y) = find_neighbours(host_position_information);
+
+			// Correct left and right boundaries to be periodic
+			for (cl_uint cell = 0; cell != host_cell_type_x.size(); ++cell)
+			{
+				if ((host_cell_type_x[cell] == Cell_Type::Dirichlet_left) && (host_position_information[cell * 2] < step_size_x * (2.0 - n / 2)))
+				{
+					host_cell_type_x[cell] = Cell_Type::Periodic_left;
+					host_adjacency_information[cell * 4 + 0] = cell + n - 1;
+				}
+				else if ((host_cell_type_x[cell] == Cell_Type::Dirichlet_right) && (host_position_information[cell * 2] > step_size_x * (n / 2 - 2.0)))
+				{
+					host_cell_type_x[cell] = Cell_Type::Periodic_right;
+					host_adjacency_information[cell * 4 + 1] = cell + 1 - n;
+				}
+			}
+			break;
+		}
+		case 6:
+		{ // Double slit in a rectangle with some periodic and some Dirichlet boundaries
+			int n{1000}, slit_position_y{n}, slit_position_x{n / 10}, slit_width_x{n / 100}, slit_width_y{1};
+			step_size_x = static_cast<integrator_precision>(0.025);
+			step_size_y = static_cast<integrator_precision>(0.025);
+			wave_speed = static_cast<integrator_precision>(1.0);
+			domain_scaling_factor = {n * step_size_x, n * step_size_y};
+			// Left chamber
+			for (int j = 0; j != slit_position_y; ++j)
+				for (int i = 0; i != n; ++i)
+				{
+					auto x = step_size_x * (i - n / 2);
+					auto y = step_size_y * (j - n);
+					host_position_information.insert(host_position_information.end(), {x, y});
+				}
+			// Slits
+			for (int j = slit_position_y; j != slit_position_y + slit_width_y; ++j)
+			{
+				for (int i = n / 2 - slit_position_x - slit_width_x; i != n / 2 - slit_position_x + slit_width_x; ++i)
+				{
+					auto x = step_size_x * (i - n / 2);
+					auto y = step_size_y * (j - n);
+					host_position_information.insert(host_position_information.end(), {x, y});
+				}
+				for (int i = n / 2 + slit_position_x - slit_width_x; i != n / 2 + slit_position_x + slit_width_x; ++i)
+				{
+					auto x = step_size_x * (i - n / 2);
+					auto y = step_size_y * (j - n);
+					host_position_information.insert(host_position_information.end(), {x, y});
+				}
+			}
+			// Right chamber
+			for (int j = slit_position_y + slit_width_y; j != 2 * n + slit_width_y; ++j)
+				for (int i = 0; i != n; ++i)
+				{
+					auto x = step_size_x * (i - n / 2);
+					auto y = step_size_y * (j - n);
 					host_position_information.insert(host_position_information.end(), {x, y});
 				}
 			std::tie(host_adjacency_information, host_cell_type_x, host_cell_type_y) = find_neighbours(host_position_information);

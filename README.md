@@ -7,11 +7,13 @@ A Qt frontend to the integrator can be found in the Qt folder.
 As of version 3.0, the integrator has been implemented in OpenCL using boost.compute. This allows for a significant performance gain sufficient to run a 1 million element simulation using 3 stages in x and y.
 
 ## Build Instructions
-Run `make` in `Qt/QtWaves`.
+Run `cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release && cmake --build build` in `Qt/QtWaves`.
 Hopefully everything required is there.
 
 ## Running
-Run `./QtWaves` in the `Qt/QtWaves` folder and choose the desired configuration in the GUI.
+Run `./build/QtWaves` in the `Qt/QtWaves` folder and choose the desired configuration in the GUI.
+
+Note: If the program fails to start with a segfault, then this could be due to an issue with Qt on Wayland, in which case running with `QT_QPA_PLATFORM=xcb ./build/QtWaves` should work.
 
 Some configurations have a much higher number of cells than others, see the configurations below.
 
