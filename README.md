@@ -18,7 +18,7 @@ Note: If the program fails to start with a segfault, then this could be due to a
 Some configurations have a much higher number of cells than others, see the configurations below.
 
 The product of `FPS`, `Steps/Frame` and `Timestep` give the ratio of simulation time to real-time, which is shown in parentheses in the `Time` display.
-Initial configuration was built for an older laptop with lower specs, so real-time simulations will generally require much lower time-steps.
+Initial configuration was built for an older laptop with lower specs, so 1:1 real-time simulations will generally require much lower time-steps.
 
 ## Configurations:
 ### Boundary Conditions
