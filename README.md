@@ -17,7 +17,7 @@ Note: If the program fails to start with a segfault, then this could be due to a
 
 Some configurations have a much higher number of cells than others, see the configurations below.
 
-The `SPF` number in the `Time` box indicates the number of steps being taken per frame, so adjust the `Timestep` to get something approaching real-time.
+The product of `FPS`, `Steps/Frame` and `Timestep` give the ratio of simulation time to real-time, which is shown in parentheses in the `Time` display.
 Initial configuration was built for an older laptop with lower specs, so real-time simulations will generally require much lower time-steps.
 
 ## Configurations:
@@ -46,6 +46,10 @@ Initial configuration was built for an older laptop with lower specs, so real-ti
 	- A double slit in a 1000x1000 cell square with Dirichlet boundary conditions at the slit and two edges, periodic boundary conditions on the side edges.
 	- dx = dy = 0.025
 	- wave speed = 0.3
+- Double slit 2 (mixed BCs)
+	- Similar to the "Double slit (mixed BCs)" configuration, but with the double slit centred in a 1000x2000 cell rectangle.
+	- dx = dy = 0.025
+	- wave speed = 1
 
 ### Initial Conditions
 - Single frequency:
@@ -62,3 +66,5 @@ Initial configuration was built for an older laptop with lower specs, so real-ti
 - A localised wave:
 	- A Gaussian hump in one dimension only with the other dimension being constant to make a wave.
 	- Good starting condition for the double slit boundary condition.
+- Off-centre localised hump 2:
+	- A localised hump at a more suitable position for the "Double slit 2 (mixed BCs)" boundary condition.

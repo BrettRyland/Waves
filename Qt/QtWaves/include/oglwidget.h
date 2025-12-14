@@ -82,8 +82,9 @@ namespace Waves
 		void change_height_scale(double scale);																								///< Change the height scale
 		void reset_integrator() { change_initial_conditions(m_integrator_wrapper.get_IC()); } ///< Reset the integrator to the initial conditions
 		double get_time() const { return m_integrator_wrapper.get_time(); }										///< Get the time reported by the simulation (i.e. the time step * number of steps)
-		double get_spf() { return m_integrator_wrapper.get_steps_taken(); }										///< Get the number of steps taken since last time this function was called
-		double get_fps() { return m_fps; }																										///< Get the smoothed FPS.
+		double get_spf() { return m_integrator_wrapper.get_steps_taken(); }							///< Get the number of steps taken since last time this function was called
+		double get_fps() const { return m_fps; }																							///< Get the smoothed FPS.
+		double get_time_step() const { return m_integrator_wrapper.get_time_step(); }					///< Get the currently used time-step.
 
 	signals:
 		void pause_integrator();					///< Pause the integrator

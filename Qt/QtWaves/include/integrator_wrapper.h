@@ -48,11 +48,12 @@ namespace Waves
 			m_avg_step_count = 0.95 * m_avg_step_count + 0.05 * steps_taken;
 			m_step_counter = 0;
 			return m_avg_step_count;
-		} ///< Returns the number of steps taken since the last time this function was called.
+		} ///< Returns the number of steps taken since the last time this function was called (smoothed average).
 		// integrator pass-through accessors
 		auto const get_IC() const { return m_integrator.get_IC(); }									///< Get the current initial conditions
 		auto const get_BC() const { return m_integrator.get_BC(); }									///< Get the current boundary conditions
 		auto const get_time() const { return m_integrator.get_time(); }							///< Get the time reported by the integrator
+		auto const get_time_step() const { return m_integrator.get_time_step(); }		///< Get the time-step being used by the integrator
 		auto const get_wave_speed() const { return m_integrator.get_wave_speed(); } ///< Get the wave speed for the current boundary conditions
 		// mesh pass-through accessors
 		auto const get_mesh_vertex_data() const { return m_mesh.get_vertex_data(); }					 ///< Get the mesh vertex data

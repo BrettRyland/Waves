@@ -31,8 +31,12 @@ namespace Waves
 										 { emit ui->openGLWidget->change_boundary_conditions(index); });
 		QObject::connect(ui->openGLWidget, &OGLWidget::update_time, [=]()
 										 {
-											ui->time_lineEdit->setText(QString("Time: %1s").arg(QString::number(ui->openGLWidget->get_time())));
-											ui->stats_lineEdit->setText(QString("FPS: %1, Steps/Frame: %2").arg(QString::number(ui->openGLWidget->get_fps(), 'f', 1), QString::number(ui->openGLWidget->get_spf(), 'f', 1))); });
+											auto fps = ui->openGLWidget->get_fps();
+											auto spf = ui->openGLWidget->get_spf();
+											auto t = ui->openGLWidget->get_time();
+											auto dt = ui->openGLWidget->get_time_step();
+											ui->time_lineEdit->setText(QString("Time: %1s (%2x)").arg(QString::number(t), QString::number(fps * spf * dt, 'f', 1)));
+											ui->stats_lineEdit->setText(QString("FPS: %1, Steps/Frame: %2").arg(QString::number(fps, 'f', 1), QString::number(spf, 'f', 1))); });
 		QObject::connect(ui->waveSpeed_doubleSpinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [=](double d)
 										 { emit ui->openGLWidget->change_wave_speed(d); });
 		QObject::connect(ui->heightScale_doubleSpinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [=](double d)
