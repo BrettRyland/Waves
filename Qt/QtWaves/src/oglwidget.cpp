@@ -63,7 +63,7 @@ namespace Waves
 	{
 		// Initialise the boost.compute context and queue
 		try{
-		m_shared_context = boost::compute::opengl_create_shared_context();}
+		m_shared_context = boost::compute::opengl_create_shared_context();} // Note: if this segfaults on Wayland, use QT_QPA_PLATFORM=xcb
 		catch(std::exception &e){
 			std::cout << e.what() << std::endl;
 			throw;

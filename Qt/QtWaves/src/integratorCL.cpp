@@ -311,7 +311,7 @@ namespace Waves
 		{ // Continuous spectrum of frequencies in the y-direction
 			// u=exp(f(x,y))-1, where f(x,y)=a*(1-y^2/by^2)
 			// note: if a/by^2 is too large then the integrator will break due to a CFL condition!
-			integrator_precision b = static_cast<integrator_precision>(0.2), a = static_cast<integrator_precision>(1.5), y0 = static_cast<integrator_precision>(-0.8);
+			integrator_precision b = static_cast<integrator_precision>(0.2), a = static_cast<integrator_precision>(1.5), y0 = static_cast<integrator_precision>(0.8);
 			for (cl_uint c = 0; c < num_cells; ++c)
 				for (unsigned int j = 0; j < stages_y; ++j)
 					for (unsigned int i = 0; i < stages_x; ++i)
@@ -584,10 +584,10 @@ namespace Waves
 		}
 		case 5:
 		{ // Double slit in a square with some periodic and some Dirichlet boundaries
-			int n{1000}, slit_position_y{n / 5}, slit_position_x{n / 10}, slit_width_x{n / 100}, slit_width_y{1};
+			int n{1000}, slit_position_y{4 * n / 5}, slit_position_x{n / 10}, slit_width_x{n / 100}, slit_width_y{1};
 			step_size_x = static_cast<integrator_precision>(0.025);
 			step_size_y = static_cast<integrator_precision>(0.025);
-			wave_speed = static_cast<integrator_precision>(0.3);
+			wave_speed = static_cast<integrator_precision>(1.0);
 			domain_scaling_factor = {n * step_size_x, n * step_size_y};
 			// Source chamber
 			for (int j = 0; j != slit_position_y; ++j)
@@ -641,7 +641,7 @@ namespace Waves
 		}
 		case 6:
 		{ // Double slit in a rectangle with some periodic and some Dirichlet boundaries
-			int n{1000}, slit_position_y{n}, slit_position_x{n / 10}, slit_width_x{n / 100}, slit_width_y{1};
+			int n{1000}, slit_position_y{n}, slit_position_x{n / 10}, slit_width_x{n / 50}, slit_width_y{1};
 			step_size_x = static_cast<integrator_precision>(0.025);
 			step_size_y = static_cast<integrator_precision>(0.025);
 			wave_speed = static_cast<integrator_precision>(1.0);
