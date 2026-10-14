@@ -1,4 +1,5 @@
 ///@file
+///@note If this fails to run with a segfault or "Invalid Device", it's likely due to a bug in Qt<->Wayland. Set the QT_QPA_PLATFORM=xcb environment variable to work around it.
 
 #include <QApplication>
 #include "mainwindow.h"
