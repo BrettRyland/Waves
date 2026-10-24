@@ -4,8 +4,9 @@
 #include <QOpenGLBuffer>
 #include <vector>
 #include <array>
-#include <boost/compute/interop/opengl.hpp>
+// #include <boost/compute/interop/opengl.hpp>
 
+#include "opengl_interop.h"
 #include "vertex.h"
 #include "integratorCL.h"
 

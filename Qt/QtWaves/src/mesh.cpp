@@ -4,7 +4,6 @@
 #include <QOpenGLFunctions>
 #include <cassert>
 #include <limits>
-#include <boost/compute/interop/opengl.hpp>
 #include "mesh.h"
 
 namespace Waves {
