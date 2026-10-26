@@ -3,8 +3,8 @@
 #include <QKeyEvent>
 #include <QThread>
 #include <QTimer>
-#include "opengl_interop.h"
 #include "oglwidget.h"
+#include "opengl_interop.h"
 #include <cmath>
 // #include <boost/compute/interop/opengl.hpp>
 #include "integrator_wrapper.h"

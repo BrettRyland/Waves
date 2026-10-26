@@ -15,7 +15,9 @@ set(CMAKE_AUTOUIC ON)
 if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
-find_package(Boost REQUIRED COMPONENTS compute)
+if (WIN32)
+    find_package(Boost REQUIRED COMPONENTS compute)
+endif()
 find_package(OpenCL REQUIRED)
 find_package(OpenGL REQUIRED)
 
@@ -43,13 +45,15 @@ target_compile_definitions(QtWaves PRIVATE
 target_link_libraries(QtWaves PRIVATE
     OpenCL::OpenCL
     OpenGL::GL
-    Boost::compute
     Qt::Core
     Qt::Gui
     Qt::Widgets
     Qt::OpenGL
     Qt::OpenGLWidgets
 )
+if (WIN32)
+    target_link_libraries(QtWaves PRIVATE Boost::compute)
+endif()
 
 qt_add_resources(QtWaves "qtwaves"
     PREFIX
