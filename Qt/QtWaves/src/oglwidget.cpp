@@ -72,7 +72,7 @@ namespace Waves
 		m_queue = boost::compute::command_queue(m_shared_context, m_shared_context.get_device());
 
 		// Initialise the integrator wrapper
-		double dt = 0.001;
+		double dt = 0.005;
 		m_integrator_wrapper.initialise(dt, 2, 2, 5, 5, m_shared_context, m_queue);
 		emit notify_time_step(dt);
 		emit notify_IC_changed(m_integrator_wrapper.get_IC());

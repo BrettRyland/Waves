@@ -19,14 +19,6 @@
           "checksum": "wVa86FgEkvdCTVp1/nxvrkaemJc="
         }
       }
-    },
-    {
-      "name": "RelWithDebInfo",
-      "inherits": "Qt",
-      "description": "Configure for RelWithDebInfo build",
-			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "RelWithDebInfo"
-			}
     }
   ],
   "vendor": {

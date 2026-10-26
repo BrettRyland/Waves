@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.30)
 project(QtWaves VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -67,13 +67,16 @@ if (WIN32)
     add_custom_command(
         TARGET QtWaves
         POST_BUILD
-
         COMMENT "Copying OpenCL kernels and shaders to build output directory: from ${SHADER_SOURCE_DIR} to ${SHADER_DEST_DIR}, from ${KERNEL_SOURCE_DIR} to ${KERNEL_DEST_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_DEST_DIR}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${SHADER_SOURCE_DIR} ${SHADER_DEST_DIR}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${KERNEL_DEST_DIR}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${KERNEL_SOURCE_DIR} ${KERNEL_DEST_DIR}
+    )
 
+    add_custom_command(
+        TARGET QtWaves
+        POST_BUILD
         COMMENT "Running windeployqt to include the appropriate libraries."
         COMMAND "C:/Qt/6.12.0/msvc2022_64/bin/windeployqt.exe" "$<TARGET_FILE:QtWaves>"
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
