@@ -312,5 +312,4 @@ html/
 **/vcpkg_installed
 **/.vscode
 **/CMakeUserPresets.json
-**/vcpkg-configuration.json
 **/%APPDATA%
