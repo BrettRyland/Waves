@@ -66,12 +66,8 @@ namespace Waves
 		~OGLWidget();
 
 	public slots:
-		void update(); ///< Update the display
-		inline void reset_view()
-		{
-			m_modelview.reset();
-			QOpenGLWidget::update();
-		} ///< Revert to the default view
+		void update();																																				///< Update the display
+		void reset_view();																																		///< Revert to the default view
 		void change_initial_conditions(int ic = -1);																					///< Switch to the next set of initial conditions
 		void change_boundary_conditions(int bc = -1);																					///< Switch to the next set of boundary conditions
 		inline bool is_paused() { return m_integrator_wrapper.is_paused(); }									///< Return the paused state
@@ -82,7 +78,7 @@ namespace Waves
 		void change_height_scale(double scale);																								///< Change the height scale
 		void reset_integrator() { change_initial_conditions(m_integrator_wrapper.get_IC()); } ///< Reset the integrator to the initial conditions
 		double get_time() const { return m_integrator_wrapper.get_time(); }										///< Get the time reported by the simulation (i.e. the time step * number of steps)
-		double get_spf() { return m_integrator_wrapper.get_steps_taken(); }							///< Get the number of steps taken since last time this function was called
+		double get_spf() { return m_integrator_wrapper.get_steps_taken(); }										///< Get the number of steps taken since last time this function was called
 		double get_fps() const { return m_fps; }																							///< Get the smoothed FPS.
 		double get_time_step() const { return m_integrator_wrapper.get_time_step(); }					///< Get the currently used time-step.
 

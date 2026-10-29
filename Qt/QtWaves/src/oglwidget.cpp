@@ -63,17 +63,23 @@ namespace Waves
 	void OGLWidget::initializeGL()
 	{
 		// Initialise the boost.compute context and queue
-		try{
-		m_shared_context = boost::compute::opengl_create_shared_context();} // Note: if this segfaults on Wayland, use QT_QPA_PLATFORM=xcb
-		catch(std::exception &e){
+		try
+		{
+			m_shared_context = boost::compute::opengl_create_shared_context(); // Note: if this segfaults on Wayland, use QT_QPA_PLATFORM=xcb
+		}
+		catch (std::exception &e)
+		{
 			std::cout << e.what() << std::endl;
 			throw;
 		}
 		m_queue = boost::compute::command_queue(m_shared_context, m_shared_context.get_device());
 
 		// Initialise the integrator wrapper
-		double dt = 0.005;
-		m_integrator_wrapper.initialise(dt, 2, 2, 5, 5, m_shared_context, m_queue);
+		double dt = 0.0005;
+		int ic = 6; // 2M element double slit
+		int bc = 6; // Localised offset hump
+		m_integrator_wrapper.initialise(dt, 2, 2, ic, bc, m_shared_context, m_queue);
+		reset_view();
 		emit notify_time_step(dt);
 		emit notify_IC_changed(m_integrator_wrapper.get_IC());
 		emit notify_BC_changed(m_integrator_wrapper.get_BC());
@@ -99,6 +105,20 @@ namespace Waves
 		// Set some Qt behaviours
 		setFocusPolicy(Qt::WheelFocus);
 		setUpdateBehavior(QOpenGLWidget::NoPartialUpdate);
+	}
+
+	void OGLWidget::reset_view()
+	{
+		m_modelview.reset();
+		if (m_integrator_wrapper.get_BC() == 6)
+		{
+			m_modelview.translate(0.0f, 10.0f, -15.0f);
+			m_modelview.rotate(-10.0f, 1.0f, 0.0f, 0.0f);
+			m_modelview.rotate(-90.0f, 0.0f, 0.0f, 1.0f);
+			m_modelview.update();
+		}
+
+		QOpenGLWidget::update();
 	}
 
 	void OGLWidget::resizeGL(int width, int height)
